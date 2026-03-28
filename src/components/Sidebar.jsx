@@ -7,7 +7,8 @@ import {
   UserSearch, FolderOpen, ArrowRightLeft, Plane, Receipt,
   Eye, ListChecks, CheckSquare, Building, MapPin, Network,
   UserCircle, MessageCircle, FileText, Zap, Bell, UserCog,
-  ScrollText, Settings, BookOpen, Bot, Globe, Award, LogOut
+  ScrollText, Settings, BookOpen, Bot, Globe, Award, LogOut,
+  Warehouse, PackageOpen, Truck, BarChart2, Package
 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 
@@ -84,6 +85,22 @@ const navSections = [
       { icon: ScrollText, label: '操作紀錄', path: '/system/audit' },
       { icon: Award, label: '績效管理', path: '/system/performance' },
       { icon: Settings, label: '系統設定', path: '/system/settings' },
+    ]
+  },
+  {
+    label: 'WMS 倉庫',
+    items: [
+      {
+        icon: Warehouse, label: 'WMS 倉庫管理', path: '/wms',
+        children: [
+          { icon: BarChart2, label: '倉庫總覽', path: '/wms/overview' },
+          { icon: Package, label: '商品主檔', path: '/wms/skus' },
+          { icon: PackageOpen, label: '進貨管理', path: '/wms/inbound' },
+          { icon: BarChart3, label: '庫存管理', path: '/wms/inventory' },
+          { icon: Truck, label: '出貨管理', path: '/wms/outbound' },
+          { icon: BarChart2, label: '異常與報表', path: '/wms/reports' },
+        ]
+      }
     ]
   },
   {

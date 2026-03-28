@@ -45,6 +45,12 @@ import PerformanceMgmt from './pages/system/PerformanceMgmt'
 import SystemSettings from './pages/system/Settings'
 import HelpCenter from './pages/ai/HelpCenter'
 import AgentConsole from './pages/ai/AgentConsole'
+import WMSOverview from './pages/wms/Overview'
+import SKUs from './pages/wms/SKUs'
+import Inbound from './pages/wms/Inbound'
+import Inventory from './pages/wms/Inventory'
+import Outbound from './pages/wms/Outbound'
+import WMSReports from './pages/wms/Reports'
 
 function AdminApp() {
   return (
@@ -94,6 +100,13 @@ function AdminApp() {
             {/* AI */}
             <Route path="/ai/help" element={<HelpCenter />} />
             <Route path="/ai/agent" element={<AgentConsole />} />
+            {/* WMS */}
+            <Route path="/wms/overview" element={<WMSOverview />} />
+            <Route path="/wms/skus" element={<SKUs />} />
+            <Route path="/wms/inbound" element={<Inbound />} />
+            <Route path="/wms/inventory" element={<Inventory />} />
+            <Route path="/wms/outbound" element={<Outbound />} />
+            <Route path="/wms/reports" element={<WMSReports />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>

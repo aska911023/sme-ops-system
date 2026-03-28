@@ -1,0 +1,160 @@
+import { useState, useEffect } from 'react'
+import { Plus, ChevronDown, ChevronRight } from 'lucide-react'
+import { supabase } from '../../lib/supabase'
+import LoadingSpinner from '../../components/LoadingSpinner'
+import Modal, { Field } from '../../components/Modal'
+
+const STATUSES = ['待揀貨', '揀貨中', '已複核', '已出貨']
+const CARRIERS = ['黑貓', '新竹', '郵局', '順豐', '7-11', '全家', '自取', '其他']
+
+export default function Outbound() {
+  const [orders, setOrders] = useState([])
+  const [warehouses, setWarehouses] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [expanded, setExpanded] = useState(null)
+  const [items, setItems] = useState({})
+  const [showModal, setShowModal] = useState(false)
+  const [form, setForm] = useState({ order_number: '', customer: '', carrier: CARRIERS[0], warehouse_id: '', due_date: '', status: '待揀貨' })
+
+  useEffect(() => {
+    Promise.all([
+      supabase.from('outbound_orders').select('*').order('created_at', { ascending: false }),
+      supabase.from('warehouses').select('*'),
+    ]).then(([o, w]) => { setOrders(o.data || []); setWarehouses(w.data || []); setLoading(false) })
+  }, [])
+
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
+
+  const toggleExpand = async (id) => {
+    if (expanded === id) { setExpanded(null); return }
+    setExpanded(id)
+    if (!items[id]) {
+      const { data } = await supabase.from('outbound_items').select('*').eq('outbound_order_id', id)
+      setItems(prev => ({ ...prev, [id]: data || [] }))
+    }
+  }
+
+  const handleSubmit = async () => {
+    if (!form.order_number || !form.customer) return
+    const { data } = await supabase.from('outbound_orders').insert({ ...form, warehouse_id: form.warehouse_id || null }).select().single()
+    if (data) { setOrders(prev => [data, ...prev]); setShowModal(false); setForm({ order_number: '', customer: '', carrier: CARRIERS[0], warehouse_id: '', due_date: '', status: '待揀貨' }) }
+  }
+
+  const updateStatus = async (id, status) => {
+    const { data } = await supabase.from('outbound_orders').update({ status }).eq('id', id).select().single()
+    if (data) setOrders(prev => prev.map(o => o.id === id ? data : o))
+  }
+
+  const updateTracking = async (id, tracking_number) => {
+    const { data } = await supabase.from('outbound_orders').update({ tracking_number, status: '已出貨' }).eq('id', id).select().single()
+    if (data) setOrders(prev => prev.map(o => o.id === id ? data : o))
+  }
+
+  if (loading) return <LoadingSpinner />
+
+  return (
+    <div className="fade-in">
+      <div className="page-header">
+        <div className="page-header-row">
+          <div><h2><span className="header-icon">🚚</span> 出貨管理</h2><p>訂單揀貨、複核與出貨</p></div>
+          <button className="btn btn-primary" onClick={() => setShowModal(true)}><Plus size={14} /> 新增出貨單</button>
+        </div>
+      </div>
+
+      <div className="stat-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+        {[['待揀貨', 'var(--accent-orange)', 'var(--accent-orange-dim)'],
+          ['揀貨中', 'var(--accent-blue)', 'var(--accent-blue-dim)'],
+          ['已複核', 'var(--accent-cyan)', 'var(--accent-cyan-dim)'],
+          ['已出貨', 'var(--accent-green)', 'var(--accent-green-dim)'],
+        ].map(([s, accent, dim]) => (
+          <div key={s} className="stat-card" style={{ '--card-accent': accent, '--card-accent-dim': dim }}>
+            <div className="stat-card-label">{s}</div>
+            <div className="stat-card-value">{orders.filter(o => o.status === s).length}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {orders.map(o => (
+          <div key={o.id} className="card">
+            <div className="card-body" style={{ cursor: 'pointer' }} onClick={() => toggleExpand(o.id)}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  {expanded === o.id ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                  <div>
+                    <div style={{ fontWeight: 700 }}>{o.order_number}</div>
+                    <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{o.customer} · {o.carrier} · 截止：{o.due_date || '-'}</div>
+                    {o.tracking_number && <div style={{ fontSize: 11, color: 'var(--accent-cyan)' }}>單號：{o.tracking_number}</div>}
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <select className="form-input" style={{ padding: '2px 8px', fontSize: 12 }} value={o.status} onClick={e => e.stopPropagation()} onChange={e => updateStatus(o.id, e.target.value)}>
+                    {STATUSES.map(s => <option key={s}>{s}</option>)}
+                  </select>
+                </div>
+              </div>
+            </div>
+            {expanded === o.id && (
+              <div style={{ borderTop: '1px solid var(--border-subtle)', padding: '12px 16px' }}>
+                {/* 填寫物流單號 */}
+                <div style={{ display: 'flex', gap: 8, marginBottom: 12, alignItems: 'center' }}>
+                  <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>物流單號：</span>
+                  <input
+                    className="form-input"
+                    type="text"
+                    style={{ width: 200, padding: '4px 8px', fontSize: 12 }}
+                    defaultValue={o.tracking_number || ''}
+                    placeholder="輸入後自動標記已出貨"
+                    onBlur={e => e.target.value && updateTracking(o.id, e.target.value)}
+                  />
+                </div>
+                {(items[o.id] || []).length === 0 ? (
+                  <div style={{ color: 'var(--text-muted)', fontSize: 13, textAlign: 'center', padding: '8px 0' }}>尚無明細</div>
+                ) : (
+                  <table className="data-table">
+                    <thead><tr><th>品號</th><th>品名</th><th>應揀數量</th><th>實揀數量</th><th>儲位</th><th>狀態</th></tr></thead>
+                    <tbody>
+                      {items[o.id].map(item => (
+                        <tr key={item.id}>
+                          <td style={{ fontFamily: 'monospace' }}>{item.sku_code}</td>
+                          <td>{item.sku_name}</td>
+                          <td>{item.quantity}</td>
+                          <td style={{ fontWeight: 600, color: item.picked_qty >= item.quantity ? 'var(--accent-green)' : 'var(--text-primary)' }}>{item.picked_qty}</td>
+                          <td style={{ fontSize: 12 }}>{item.bin_code || '-'}</td>
+                          <td><span className={`badge ${item.status === '已揀貨' ? 'badge-success' : 'badge-warning'}`}><span className="badge-dot"></span>{item.status}</span></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {showModal && (
+        <Modal title="新增出貨單" onClose={() => setShowModal(false)} onSubmit={handleSubmit}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <Field label="訂單號 *"><input className="form-input" type="text" style={{ width: '100%' }} placeholder="ORD-2026-001" value={form.order_number} onChange={e => set('order_number', e.target.value)} /></Field>
+            <Field label="客戶 *"><input className="form-input" type="text" style={{ width: '100%' }} placeholder="客戶名稱" value={form.customer} onChange={e => set('customer', e.target.value)} /></Field>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <Field label="物流商">
+              <select className="form-input" style={{ width: '100%' }} value={form.carrier} onChange={e => set('carrier', e.target.value)}>
+                {CARRIERS.map(c => <option key={c}>{c}</option>)}
+              </select>
+            </Field>
+            <Field label="倉庫">
+              <select className="form-input" style={{ width: '100%' }} value={form.warehouse_id} onChange={e => set('warehouse_id', e.target.value)}>
+                <option value="">請選擇倉庫</option>
+                {warehouses.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
+              </select>
+            </Field>
+          </div>
+          <Field label="截止出貨日"><input className="form-input" type="date" style={{ width: '100%' }} value={form.due_date} onChange={e => set('due_date', e.target.value)} /></Field>
+        </Modal>
+      )}
+    </div>
+  )
+}

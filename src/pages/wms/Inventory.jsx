@@ -1,0 +1,200 @@
+import { useState, useEffect } from 'react'
+import { Plus, Search, ArrowRightLeft } from 'lucide-react'
+import { supabase } from '../../lib/supabase'
+import LoadingSpinner from '../../components/LoadingSpinner'
+import Modal, { Field } from '../../components/Modal'
+
+export default function Inventory() {
+  const [stocks, setStocks] = useState([])
+  const [adjustments, setAdjustments] = useState([])
+  const [warehouses, setWarehouses] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
+  const [tab, setTab] = useState('stock')
+  const [showAdjModal, setShowAdjModal] = useState(false)
+  const [showTransferModal, setShowTransferModal] = useState(false)
+  const [adjForm, setAdjForm] = useState({ sku_code: '', sku_name: '', bin_code: '', quantity: '', reason: '', operator: '' })
+  const [transferForm, setTransferForm] = useState({ sku_code: '', from_bin: '', to_bin: '', quantity: '' })
+
+  useEffect(() => {
+    Promise.all([
+      supabase.from('stock_levels').select('*, skus(code, name), bins(code, zone)').order('id'),
+      supabase.from('inventory_adjustments').select('*').order('created_at', { ascending: false }).limit(50),
+      supabase.from('warehouses').select('*'),
+    ]).then(([s, a, w]) => {
+      setStocks(s.data || [])
+      setAdjustments(a.data || [])
+      setWarehouses(w.data || [])
+      setLoading(false)
+    })
+  }, [])
+
+  const setA = (k, v) => setAdjForm(f => ({ ...f, [k]: v }))
+  const setT = (k, v) => setTransferForm(f => ({ ...f, [k]: v }))
+
+  const handleAdjust = async () => {
+    if (!adjForm.sku_code || !adjForm.quantity || !adjForm.reason) return
+    const { data } = await supabase.from('inventory_adjustments').insert({ ...adjForm, quantity: Number(adjForm.quantity) }).select().single()
+    if (data) {
+      setAdjustments(prev => [data, ...prev])
+      setShowAdjModal(false)
+      setAdjForm({ sku_code: '', sku_name: '', bin_code: '', quantity: '', reason: '', operator: '' })
+    }
+  }
+
+  const handleTransfer = async () => {
+    if (!transferForm.sku_code || !transferForm.from_bin || !transferForm.to_bin) return
+    await supabase.from('inventory_adjustments').insert({
+      sku_code: transferForm.sku_code, bin_code: transferForm.from_bin,
+      quantity: -Number(transferForm.quantity),
+      reason: `庫內移倉至 ${transferForm.to_bin}`, operator: '系統'
+    })
+    await supabase.from('inventory_adjustments').insert({
+      sku_code: transferForm.sku_code, bin_code: transferForm.to_bin,
+      quantity: Number(transferForm.quantity),
+      reason: `從 ${transferForm.from_bin} 移入`, operator: '系統'
+    })
+    const { data } = await supabase.from('inventory_adjustments').select('*').order('created_at', { ascending: false }).limit(50)
+    setAdjustments(data || [])
+    setShowTransferModal(false)
+    setTransferForm({ sku_code: '', from_bin: '', to_bin: '', quantity: '' })
+  }
+
+  const filtered = stocks.filter(s =>
+    s.skus?.code?.includes(search) || s.skus?.name?.includes(search) || s.bins?.code?.includes(search)
+  )
+
+  if (loading) return <LoadingSpinner />
+
+  const totalQty = stocks.reduce((s, i) => s + (i.quantity || 0), 0)
+  const expiringCount = stocks.filter(s => {
+    if (!s.expiry_date) return false
+    const diff = (new Date(s.expiry_date) - new Date()) / (1000 * 60 * 60 * 24)
+    return diff <= 30 && diff >= 0
+  }).length
+
+  return (
+    <div className="fade-in">
+      <div className="page-header">
+        <div className="page-header-row">
+          <div><h2><span className="header-icon">📊</span> 庫存管理</h2><p>即時庫存查詢與調整</p></div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button className="btn btn-secondary" onClick={() => setShowTransferModal(true)}><ArrowRightLeft size={14} /> 庫內移倉</button>
+            <button className="btn btn-primary" onClick={() => setShowAdjModal(true)}><Plus size={14} /> 庫存調整</button>
+          </div>
+        </div>
+      </div>
+
+      <div className="stat-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+        <div className="stat-card" style={{ '--card-accent': 'var(--accent-cyan)', '--card-accent-dim': 'var(--accent-cyan-dim)' }}>
+          <div className="stat-card-label">庫存筆數</div><div className="stat-card-value">{stocks.length}</div>
+        </div>
+        <div className="stat-card" style={{ '--card-accent': 'var(--accent-green)', '--card-accent-dim': 'var(--accent-green-dim)' }}>
+          <div className="stat-card-label">總在庫數量</div><div className="stat-card-value">{totalQty.toLocaleString()}</div>
+        </div>
+        <div className="stat-card" style={{ '--card-accent': 'var(--accent-orange)', '--card-accent-dim': 'var(--accent-orange-dim)' }}>
+          <div className="stat-card-label">30天內效期</div><div className="stat-card-value">{expiringCount}</div>
+        </div>
+        <div className="stat-card" style={{ '--card-accent': 'var(--accent-purple)', '--card-accent-dim': 'var(--accent-purple-dim)' }}>
+          <div className="stat-card-label">調整紀錄</div><div className="stat-card-value">{adjustments.length}</div>
+        </div>
+      </div>
+
+      {/* Tab */}
+      <div style={{ display: 'flex', gap: 4, marginBottom: 16, background: 'var(--bg-card)', borderRadius: 10, padding: 4, border: '1px solid var(--border-subtle)', width: 'fit-content' }}>
+        {[['stock', '📦 庫存總覽'], ['adjustments', '📝 調整紀錄']].map(([key, label]) => (
+          <button key={key} onClick={() => setTab(key)} style={{ padding: '6px 16px', borderRadius: 7, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 500, background: tab === key ? 'var(--accent-cyan)' : 'transparent', color: tab === key ? '#fff' : 'var(--text-muted)' }}>{label}</button>
+        ))}
+      </div>
+
+      {tab === 'stock' && (
+        <div className="card">
+          <div className="card-header">
+            <div className="card-title"><span className="card-title-icon">📦</span> 庫存清單</div>
+            <div className="search-bar"><Search className="search-icon" /><input type="text" placeholder="品號/品名/儲位..." className="form-input" style={{ paddingLeft: 38 }} value={search} onChange={e => setSearch(e.target.value)} /></div>
+          </div>
+          <div className="data-table-wrapper">
+            <table className="data-table">
+              <thead><tr><th>品號</th><th>品名</th><th>儲位</th><th>區域</th><th>數量</th><th>效期</th></tr></thead>
+              <tbody>
+                {filtered.length === 0 && <tr><td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-muted)' }}>尚無庫存資料</td></tr>}
+                {filtered.map(s => {
+                  const daysLeft = s.expiry_date ? Math.round((new Date(s.expiry_date) - new Date()) / (1000 * 60 * 60 * 24)) : null
+                  return (
+                    <tr key={s.id}>
+                      <td style={{ fontFamily: 'monospace', fontWeight: 600 }}>{s.skus?.code}</td>
+                      <td>{s.skus?.name}</td>
+                      <td><span className="badge badge-neutral">{s.bins?.code || '-'}</span></td>
+                      <td>{s.bins?.zone || '-'}</td>
+                      <td style={{ fontWeight: 700, color: s.quantity <= 0 ? 'var(--accent-red)' : 'var(--text-primary)' }}>{s.quantity}</td>
+                      <td>
+                        {s.expiry_date ? (
+                          <span style={{ fontSize: 12, color: daysLeft <= 7 ? 'var(--accent-red)' : daysLeft <= 30 ? 'var(--accent-orange)' : 'var(--text-secondary)' }}>
+                            {s.expiry_date} {daysLeft !== null && `(${daysLeft}天)`}
+                          </span>
+                        ) : '-'}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {tab === 'adjustments' && (
+        <div className="card">
+          <div className="card-header"><div className="card-title"><span className="card-title-icon">📝</span> 庫存調整紀錄</div></div>
+          <div className="data-table-wrapper">
+            <table className="data-table">
+              <thead><tr><th>時間</th><th>品號</th><th>品名</th><th>儲位</th><th>調整數量</th><th>原因</th><th>操作人</th></tr></thead>
+              <tbody>
+                {adjustments.length === 0 && <tr><td colSpan={7} style={{ textAlign: 'center', color: 'var(--text-muted)' }}>尚無調整紀錄</td></tr>}
+                {adjustments.map(a => (
+                  <tr key={a.id}>
+                    <td style={{ fontSize: 12 }}>{new Date(a.created_at).toLocaleString('zh-TW')}</td>
+                    <td style={{ fontFamily: 'monospace' }}>{a.sku_code}</td>
+                    <td>{a.sku_name}</td>
+                    <td>{a.bin_code}</td>
+                    <td style={{ fontWeight: 700, color: a.quantity > 0 ? 'var(--accent-green)' : 'var(--accent-red)' }}>
+                      {a.quantity > 0 ? '+' : ''}{a.quantity}
+                    </td>
+                    <td style={{ fontSize: 12 }}>{a.reason}</td>
+                    <td>{a.operator}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {showAdjModal && (
+        <Modal title="庫存調整" onClose={() => setShowAdjModal(false)} onSubmit={handleAdjust}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <Field label="品號 *"><input className="form-input" type="text" style={{ width: '100%' }} placeholder="SKU-001" value={adjForm.sku_code} onChange={e => setA('sku_code', e.target.value)} /></Field>
+            <Field label="品名"><input className="form-input" type="text" style={{ width: '100%' }} placeholder="商品名稱" value={adjForm.sku_name} onChange={e => setA('sku_name', e.target.value)} /></Field>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <Field label="儲位"><input className="form-input" type="text" style={{ width: '100%' }} placeholder="A-01-01" value={adjForm.bin_code} onChange={e => setA('bin_code', e.target.value)} /></Field>
+            <Field label="調整數量 *"><input className="form-input" type="number" style={{ width: '100%' }} placeholder="負數=減少，正數=增加" value={adjForm.quantity} onChange={e => setA('quantity', e.target.value)} /></Field>
+          </div>
+          <Field label="原因 *"><input className="form-input" type="text" style={{ width: '100%' }} placeholder="損壞/遺失/盤點調整..." value={adjForm.reason} onChange={e => setA('reason', e.target.value)} /></Field>
+          <Field label="操作人"><input className="form-input" type="text" style={{ width: '100%' }} placeholder="姓名" value={adjForm.operator} onChange={e => setA('operator', e.target.value)} /></Field>
+        </Modal>
+      )}
+
+      {showTransferModal && (
+        <Modal title="庫內移倉" onClose={() => setShowTransferModal(false)} onSubmit={handleTransfer} submitLabel="確認移倉">
+          <Field label="品號 *"><input className="form-input" type="text" style={{ width: '100%' }} placeholder="SKU-001" value={transferForm.sku_code} onChange={e => setT('sku_code', e.target.value)} /></Field>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <Field label="來源儲位 *"><input className="form-input" type="text" style={{ width: '100%' }} placeholder="A-01-01" value={transferForm.from_bin} onChange={e => setT('from_bin', e.target.value)} /></Field>
+            <Field label="目標儲位 *"><input className="form-input" type="text" style={{ width: '100%' }} placeholder="B-02-03" value={transferForm.to_bin} onChange={e => setT('to_bin', e.target.value)} /></Field>
+          </div>
+          <Field label="移倉數量 *"><input className="form-input" type="number" style={{ width: '100%' }} placeholder="0" value={transferForm.quantity} onChange={e => setT('quantity', e.target.value)} /></Field>
+        </Modal>
+      )}
+    </div>
+  )
+}
