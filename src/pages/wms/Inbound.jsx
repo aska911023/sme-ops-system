@@ -10,6 +10,7 @@ export default function Inbound() {
   const [orders, setOrders] = useState([])
   const [warehouses, setWarehouses] = useState([])
   const [loading, setLoading] = useState(true)
+  const [whFilter, setWhFilter] = useState('')
   const [expanded, setExpanded] = useState(null)
   const [items, setItems] = useState({})
   const [showModal, setShowModal] = useState(false)
@@ -77,8 +78,20 @@ export default function Inbound() {
         ))}
       </div>
 
+      {/* 倉庫篩選 */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
+        <button onClick={() => setWhFilter('')} style={{ padding: '6px 14px', borderRadius: 8, border: '1px solid var(--border-medium)', background: whFilter === '' ? 'var(--accent-cyan)' : 'var(--bg-card)', color: whFilter === '' ? '#fff' : 'var(--text-secondary)', cursor: 'pointer', fontSize: 12, fontWeight: 500 }}>
+          全部
+        </button>
+        {warehouses.map(w => (
+          <button key={w.id} onClick={() => setWhFilter(String(w.id))} style={{ padding: '6px 14px', borderRadius: 8, border: '1px solid var(--border-medium)', background: whFilter === String(w.id) ? 'var(--accent-cyan)' : 'var(--bg-card)', color: whFilter === String(w.id) ? '#fff' : 'var(--text-secondary)', cursor: 'pointer', fontSize: 12, fontWeight: 500 }}>
+            {w.name}
+          </button>
+        ))}
+      </div>
+
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {orders.map(o => (
+        {orders.filter(o => whFilter === '' || String(o.warehouse_id) === whFilter).map(o => (
           <div key={o.id} className="card">
             <div className="card-body" style={{ cursor: 'pointer' }} onClick={() => toggleExpand(o.id)}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

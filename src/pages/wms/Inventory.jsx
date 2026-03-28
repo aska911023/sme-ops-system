@@ -60,8 +60,11 @@ export default function Inventory() {
     setTransferForm({ sku_code: '', from_bin: '', to_bin: '', quantity: '' })
   }
 
+  const [whFilter, setWhFilter] = useState('')
+
   const filtered = stocks.filter(s =>
-    s.skus?.code?.includes(search) || s.skus?.name?.includes(search) || s.bins?.code?.includes(search)
+    (whFilter === '' || s.warehouse_id === Number(whFilter)) &&
+    (s.skus?.code?.includes(search) || s.skus?.name?.includes(search) || s.bins?.code?.includes(search))
   )
 
   if (loading) return <LoadingSpinner />
@@ -111,7 +114,13 @@ export default function Inventory() {
         <div className="card">
           <div className="card-header">
             <div className="card-title"><span className="card-title-icon">📦</span> 庫存清單</div>
-            <div className="search-bar"><Search className="search-icon" /><input type="text" placeholder="品號/品名/儲位..." className="form-input" style={{ paddingLeft: 38 }} value={search} onChange={e => setSearch(e.target.value)} /></div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <select className="form-input" style={{ fontSize: 12 }} value={whFilter} onChange={e => setWhFilter(e.target.value)}>
+                <option value="">全部倉庫</option>
+                {warehouses.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
+              </select>
+              <div className="search-bar"><Search className="search-icon" /><input type="text" placeholder="品號/品名/儲位..." className="form-input" style={{ paddingLeft: 38 }} value={search} onChange={e => setSearch(e.target.value)} /></div>
+            </div>
           </div>
           <div className="data-table-wrapper">
             <table className="data-table">
