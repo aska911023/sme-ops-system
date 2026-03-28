@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import Login from './pages/Login'
+import Demo from './pages/Demo'
 import PortalLayout from './pages/portal/PortalLayout'
 import PortalHome from './pages/portal/PortalHome'
 import Clock from './pages/portal/Clock'
@@ -23,6 +24,7 @@ import Performance from './pages/hr/Performance'
 import Recruitment from './pages/hr/Recruitment'
 import Documents from './pages/hr/Documents'
 import Transfer from './pages/hr/Transfer'
+import Bonus from './pages/hr/Bonus'
 import BusinessTravel from './pages/hr/BusinessTravel'
 import Expenses from './pages/hr/Expenses'
 import ProcessOverview from './pages/process/Overview'
@@ -45,6 +47,11 @@ import PerformanceMgmt from './pages/system/PerformanceMgmt'
 import SystemSettings from './pages/system/Settings'
 import HelpCenter from './pages/ai/HelpCenter'
 import AgentConsole from './pages/ai/AgentConsole'
+import CRMOverview from './pages/crm/Overview'
+import Customers from './pages/crm/Customers'
+import Pipeline from './pages/crm/Pipeline'
+import CRMMarketing from './pages/crm/Marketing'
+import CRMService from './pages/crm/Service'
 import WMSOverview from './pages/wms/Overview'
 import SKUs from './pages/wms/SKUs'
 import Inbound from './pages/wms/Inbound'
@@ -76,6 +83,7 @@ function AdminApp() {
             <Route path="/hr/transfer" element={<Transfer />} />
             <Route path="/hr/travel" element={<BusinessTravel />} />
             <Route path="/hr/expenses" element={<Expenses />} />
+            <Route path="/hr/bonus" element={<Bonus />} />
             {/* Process */}
             <Route path="/process/overview" element={<ProcessOverview />} />
             <Route path="/process/workflows" element={<Workflows />} />
@@ -100,6 +108,12 @@ function AdminApp() {
             {/* AI */}
             <Route path="/ai/help" element={<HelpCenter />} />
             <Route path="/ai/agent" element={<AgentConsole />} />
+            {/* CRM */}
+            <Route path="/crm/overview" element={<CRMOverview />} />
+            <Route path="/crm/customers" element={<Customers />} />
+            <Route path="/crm/pipeline" element={<Pipeline />} />
+            <Route path="/crm/marketing" element={<CRMMarketing />} />
+            <Route path="/crm/service" element={<CRMService />} />
             {/* WMS */}
             <Route path="/wms/overview" element={<WMSOverview />} />
             <Route path="/wms/skus" element={<SKUs />} />
@@ -126,7 +140,12 @@ function AppRoutes() {
     )
   }
 
-  if (!user) return <Routes><Route path="*" element={<Login />} /></Routes>
+  if (!user) return (
+    <Routes>
+      <Route path="/demo" element={<Demo />} />
+      <Route path="*" element={<Login />} />
+    </Routes>
+  )
 
   if (profile?.role === 'admin') {
     return <AdminApp />

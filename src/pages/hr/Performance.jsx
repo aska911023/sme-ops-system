@@ -13,6 +13,9 @@ export default function Performance() {
   const [tab, setTab] = useState('reviews')
   const [reviews, setReviews] = useState([])
   const [goals, setGoals] = useState([])
+  const [employees, setEmployees] = useState([])
+  const [departments, setDepartments] = useState([])
+  const [deptFilter, setDeptFilter] = useState('')
   const [loading, setLoading] = useState(true)
   const [showReviewModal, setShowReviewModal] = useState(false)
   const [showGoalModal, setShowGoalModal] = useState(false)
@@ -23,9 +26,13 @@ export default function Performance() {
     Promise.all([
       getPerformanceReviews(),
       supabase.from('performance_goals').select('*').order('id'),
-    ]).then(([r, g]) => {
+      supabase.from('employees').select('id, name, department, position').eq('status', '在職').order('name'),
+      supabase.from('departments').select('*').order('name'),
+    ]).then(([r, g, e, d]) => {
       setReviews(r.data || [])
       setGoals(g.data || [])
+      setEmployees(e.data || [])
+      setDepartments(d.data || [])
       setLoading(false)
     })
   }, [])
@@ -61,7 +68,30 @@ export default function Performance() {
     if (data) setGoals(prev => prev.map(g => g.id === goal.id ? data : g))
   }
 
-  const avg = reviews.length ? Math.round(reviews.reduce((s, p) => s + (p.overall_score || 0), 0) / reviews.length) : 0
+  const getEmpDept = (name) => employees.find(e => e.name === name)?.department || ''
+  const filteredReviews = reviews.filter(r => deptFilter === '' || getEmpDept(r.employee) === deptFilter)
+  const filteredGoals = goals.filter(g => deptFilter === '' || getEmpDept(g.employee) === deptFilter)
+  const avg = filteredReviews.length ? Math.round(filteredReviews.reduce((s, p) => s + (p.overall_score || 0), 0) / filteredReviews.length) : 0
+
+  const deptBtnStyle = (active) => ({
+    padding: '5px 12px', borderRadius: 8, border: '1px solid var(--border-medium)',
+    background: active ? 'var(--accent-cyan)' : 'var(--bg-card)',
+    color: active ? '#fff' : 'var(--text-secondary)',
+    cursor: 'pointer', fontSize: 12, fontWeight: 500
+  })
+
+  const EmpSelect = ({ value, onChange }) => (
+    <select className="form-input" style={{ width: '100%' }} value={value} onChange={e => onChange(e.target.value)}>
+      <option value="">請選擇員工</option>
+      {departments.map(d => (
+        <optgroup key={d.id} label={d.name}>
+          {employees.filter(e => e.department === d.name).map(e => (
+            <option key={e.id} value={e.name}>{e.name}｜{e.position}</option>
+          ))}
+        </optgroup>
+      ))}
+    </select>
+  )
 
   if (loading) return <LoadingSpinner />
 
@@ -82,6 +112,14 @@ export default function Performance() {
         </div>
       </div>
 
+      {/* 部門篩選 */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+        <button style={deptBtnStyle(deptFilter === '')} onClick={() => setDeptFilter('')}>全部部門</button>
+        {departments.map(d => (
+          <button key={d.id} style={deptBtnStyle(deptFilter === d.name)} onClick={() => setDeptFilter(d.name)}>{d.name}</button>
+        ))}
+      </div>
+
       {/* Tab 切換 */}
       <div style={{ display: 'flex', gap: 4, marginBottom: 20, background: 'var(--bg-card)', borderRadius: 10, padding: 4, border: '1px solid var(--border-subtle)', width: 'fit-content' }}>
         {[['reviews', '📋 考核紀錄'], ['goals', '🎯 目標追蹤']].map(([key, label]) => (
@@ -98,15 +136,15 @@ export default function Performance() {
           <div className="stat-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
             <div className="stat-card" style={{ '--card-accent': 'var(--accent-green)', '--card-accent-dim': 'var(--accent-green-dim)' }}>
               <div className="stat-card-label">已完成考核</div>
-              <div className="stat-card-value">{reviews.filter(p => p.status === '已完成').length}</div>
+              <div className="stat-card-value">{filteredReviews.filter(p => p.status === '已完成').length}</div>
             </div>
             <div className="stat-card" style={{ '--card-accent': 'var(--accent-blue)', '--card-accent-dim': 'var(--accent-blue-dim)' }}>
               <div className="stat-card-label">評核中</div>
-              <div className="stat-card-value">{reviews.filter(p => p.status === '評核中').length}</div>
+              <div className="stat-card-value">{filteredReviews.filter(p => p.status === '評核中').length}</div>
             </div>
             <div className="stat-card" style={{ '--card-accent': 'var(--accent-orange)', '--card-accent-dim': 'var(--accent-orange-dim)' }}>
               <div className="stat-card-label">自評中</div>
-              <div className="stat-card-value">{reviews.filter(p => p.status === '自評中').length}</div>
+              <div className="stat-card-value">{filteredReviews.filter(p => p.status === '自評中').length}</div>
             </div>
             <div className="stat-card" style={{ '--card-accent': 'var(--accent-cyan)', '--card-accent-dim': 'var(--accent-cyan-dim)' }}>
               <div className="stat-card-label">平均分數</div>
@@ -120,12 +158,13 @@ export default function Performance() {
             <div className="data-table-wrapper">
               <table className="data-table">
                 <thead>
-                  <tr><th>員工</th><th>考核期</th><th>分數</th><th>目標達成</th><th>等級</th><th>評核人</th><th>狀態</th></tr>
+                  <tr><th>員工</th><th>部門</th><th>考核期</th><th>分數</th><th>目標達成</th><th>等級</th><th>評核人</th><th>狀態</th></tr>
                 </thead>
                 <tbody>
-                  {reviews.map(p => (
+                  {filteredReviews.map(p => (
                     <tr key={p.id}>
                       <td style={{ fontWeight: 600 }}>{p.employee}</td>
+                      <td style={{ fontSize: 12, color: 'var(--text-muted)' }}>{getEmpDept(p.employee) || '-'}</td>
                       <td>{p.period}</td>
                       <td style={{ fontWeight: 700, color: p.overall_score >= 90 ? 'var(--accent-green)' : p.overall_score >= 80 ? 'var(--accent-cyan)' : 'var(--accent-orange)' }}>
                         {p.overall_score}
@@ -152,23 +191,23 @@ export default function Performance() {
           <div className="stat-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
             <div className="stat-card" style={{ '--card-accent': 'var(--accent-green)', '--card-accent-dim': 'var(--accent-green-dim)' }}>
               <div className="stat-card-label">已達成</div>
-              <div className="stat-card-value">{goals.filter(g => g.current >= g.target).length}</div>
+              <div className="stat-card-value">{filteredGoals.filter(g => g.current >= g.target).length}</div>
             </div>
             <div className="stat-card" style={{ '--card-accent': 'var(--accent-cyan)', '--card-accent-dim': 'var(--accent-cyan-dim)' }}>
               <div className="stat-card-label">進行中</div>
-              <div className="stat-card-value">{goals.filter(g => g.current > 0 && g.current < g.target).length}</div>
+              <div className="stat-card-value">{filteredGoals.filter(g => g.current > 0 && g.current < g.target).length}</div>
             </div>
             <div className="stat-card" style={{ '--card-accent': 'var(--accent-orange)', '--card-accent-dim': 'var(--accent-orange-dim)' }}>
               <div className="stat-card-label">未開始</div>
-              <div className="stat-card-value">{goals.filter(g => !g.current || g.current === 0).length}</div>
+              <div className="stat-card-value">{filteredGoals.filter(g => !g.current || g.current === 0).length}</div>
             </div>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {goals.length === 0 && (
+            {filteredGoals.length === 0 && (
               <div className="card"><div className="card-body" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 40 }}>尚無目標，點擊「新增目標」開始設定</div></div>
             )}
-            {goals.map(g => {
+            {filteredGoals.map(g => {
               const pct = g.target > 0 ? Math.min(100, Math.round((g.current / g.target) * 100)) : 0
               const done = g.current >= g.target
               return (
@@ -221,7 +260,7 @@ export default function Performance() {
         <Modal title="新增績效考核" onClose={() => setShowReviewModal(false)} onSubmit={handleAddReview}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <Field label="員工 *">
-              <input className="form-input" type="text" style={{ width: '100%' }} placeholder="員工姓名" value={reviewForm.employee} onChange={e => setR('employee', e.target.value)} />
+              <EmpSelect value={reviewForm.employee} onChange={v => setR('employee', v)} />
             </Field>
             <Field label="考核期">
               <select className="form-input" style={{ width: '100%' }} value={reviewForm.period} onChange={e => setR('period', e.target.value)}>
@@ -265,7 +304,7 @@ export default function Performance() {
         <Modal title="新增績效目標" onClose={() => setShowGoalModal(false)} onSubmit={handleAddGoal}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <Field label="員工 *">
-              <input className="form-input" type="text" style={{ width: '100%' }} placeholder="員工姓名" value={goalForm.employee} onChange={e => setG('employee', e.target.value)} />
+              <EmpSelect value={goalForm.employee} onChange={v => setG('employee', v)} />
             </Field>
             <Field label="分類">
               <select className="form-input" style={{ width: '100%' }} value={goalForm.category} onChange={e => setG('category', e.target.value)}>

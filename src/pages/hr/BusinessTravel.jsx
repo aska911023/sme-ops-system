@@ -1,20 +1,30 @@
 import { useState, useEffect } from 'react'
 import { Plus } from 'lucide-react'
 import { getBusinessTrips, createBusinessTrip, updateBusinessTripStatus } from '../../lib/db'
+import { supabase } from '../../lib/supabase'
 import LoadingSpinner from '../../components/LoadingSpinner'
 import Modal, { Field } from '../../components/Modal'
 
-const EMPLOYEES = ['王小明', '林美麗', '陳大偉', '張雅婷', '黃志強', '劉佳玲', '吳建宏', '蔡心怡']
-
 export default function BusinessTravel() {
   const [trips, setTrips] = useState([])
+  const [employees, setEmployees] = useState([])
+  const [departments, setDepartments] = useState([])
+  const [deptFilter, setDeptFilter] = useState('')
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
-  const [form, setForm] = useState({ employee: EMPLOYEES[0], destination: '', start_date: '', end_date: '', purpose: '', budget: '' })
+  const [form, setForm] = useState({ employee: '', destination: '', start_date: '', end_date: '', purpose: '', budget: '' })
 
   useEffect(() => {
-    getBusinessTrips().then(({ data }) => {
-      setTrips(data || [])
+    Promise.all([
+      getBusinessTrips(),
+      supabase.from('employees').select('id, name, department, position').eq('status', '在職').order('name'),
+      supabase.from('departments').select('*').order('name'),
+    ]).then(([t, e, d]) => {
+      const emps = e.data || []
+      setTrips(t.data || [])
+      setEmployees(emps)
+      setDepartments(d.data || [])
+      setForm(f => ({ ...f, employee: emps[0]?.name || '' }))
       setLoading(false)
     })
   }, [])
@@ -22,12 +32,12 @@ export default function BusinessTravel() {
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
   const handleSubmit = async () => {
-    if (!form.destination || !form.start_date) return
+    if (!form.destination || !form.start_date || !form.employee) return
     const { data } = await createBusinessTrip({ ...form, budget: Number(form.budget) || 0, status: '待審核' })
     if (data) {
       setTrips(prev => [...prev, data])
       setShowModal(false)
-      setForm({ employee: EMPLOYEES[0], destination: '', start_date: '', end_date: '', purpose: '', budget: '' })
+      setForm({ employee: employees[0]?.name || '', destination: '', start_date: '', end_date: '', purpose: '', budget: '' })
     }
   }
 
@@ -37,6 +47,19 @@ export default function BusinessTravel() {
   }
 
   if (loading) return <LoadingSpinner />
+
+  const getEmpDept = (name) => employees.find(e => e.name === name)?.department || ''
+
+  const filtered = trips.filter(t =>
+    deptFilter === '' || getEmpDept(t.employee) === deptFilter
+  )
+
+  const deptBtnStyle = (active) => ({
+    padding: '5px 12px', borderRadius: 8, border: '1px solid var(--border-medium)',
+    background: active ? 'var(--accent-cyan)' : 'var(--bg-card)',
+    color: active ? '#fff' : 'var(--text-secondary)',
+    cursor: 'pointer', fontSize: 12, fontWeight: 500
+  })
 
   return (
     <div className="fade-in">
@@ -49,14 +72,40 @@ export default function BusinessTravel() {
           <button className="btn btn-primary" onClick={() => setShowModal(true)}><Plus size={14} /> 新增差旅</button>
         </div>
       </div>
+
+      {/* 部門篩選 */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+        <button style={deptBtnStyle(deptFilter === '')} onClick={() => setDeptFilter('')}>全部部門</button>
+        {departments.map(d => (
+          <button key={d.id} style={deptBtnStyle(deptFilter === d.name)} onClick={() => setDeptFilter(d.name)}>{d.name}</button>
+        ))}
+      </div>
+
+      <div className="stat-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+        <div className="stat-card" style={{ '--card-accent': 'var(--accent-orange)', '--card-accent-dim': 'var(--accent-orange-dim)' }}>
+          <div className="stat-card-label">待審核</div>
+          <div className="stat-card-value">{filtered.filter(t => t.status === '待審核').length}</div>
+        </div>
+        <div className="stat-card" style={{ '--card-accent': 'var(--accent-green)', '--card-accent-dim': 'var(--accent-green-dim)' }}>
+          <div className="stat-card-label">已核准</div>
+          <div className="stat-card-value">{filtered.filter(t => t.status === '已核准').length}</div>
+        </div>
+        <div className="stat-card" style={{ '--card-accent': 'var(--accent-cyan)', '--card-accent-dim': 'var(--accent-cyan-dim)' }}>
+          <div className="stat-card-label">預算合計</div>
+          <div className="stat-card-value">NT$ {filtered.reduce((s, t) => s + Number(t.budget || 0), 0).toLocaleString()}</div>
+        </div>
+      </div>
+
       <div className="card">
         <div className="data-table-wrapper">
           <table className="data-table">
-            <thead><tr><th>員工</th><th>目的地</th><th>出發日</th><th>回程日</th><th>事由</th><th>預算</th><th>狀態</th><th>操作</th></tr></thead>
+            <thead><tr><th>員工</th><th>部門</th><th>目的地</th><th>出發日</th><th>回程日</th><th>事由</th><th>預算</th><th>狀態</th><th>操作</th></tr></thead>
             <tbody>
-              {trips.map(t => (
+              {filtered.length === 0 && <tr><td colSpan={9} style={{ textAlign: 'center', color: 'var(--text-muted)' }}>尚無差旅紀錄</td></tr>}
+              {filtered.map(t => (
                 <tr key={t.id}>
-                  <td>{t.employee}</td>
+                  <td style={{ fontWeight: 600 }}>{t.employee}</td>
+                  <td style={{ fontSize: 12, color: 'var(--text-muted)' }}>{getEmpDept(t.employee) || '-'}</td>
                   <td>{t.destination}</td>
                   <td>{t.start_date}</td>
                   <td>{t.end_date}</td>
@@ -81,9 +130,16 @@ export default function BusinessTravel() {
 
       {showModal && (
         <Modal title="新增差旅申請" onClose={() => setShowModal(false)} onSubmit={handleSubmit}>
-          <Field label="員工">
+          <Field label="員工 *">
             <select className="form-input" style={{ width: '100%' }} value={form.employee} onChange={e => set('employee', e.target.value)}>
-              {EMPLOYEES.map(e => <option key={e}>{e}</option>)}
+              <option value="">請選擇員工</option>
+              {departments.map(d => (
+                <optgroup key={d.id} label={d.name}>
+                  {employees.filter(e => e.department === d.name).map(e => (
+                    <option key={e.id} value={e.name}>{e.name}｜{e.position}</option>
+                  ))}
+                </optgroup>
+              ))}
             </select>
           </Field>
           <Field label="目的地">

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Plus, ChevronDown, ChevronRight } from 'lucide-react'
+import { Plus, ChevronDown, ChevronRight, AlertTriangle } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import LoadingSpinner from '../../components/LoadingSpinner'
 import Modal, { Field } from '../../components/Modal'
@@ -10,6 +10,7 @@ const CARRIERS = ['黑貓', '新竹', '郵局', '順豐', '7-11', '全家', '自
 export default function Outbound() {
   const [orders, setOrders] = useState([])
   const [warehouses, setWarehouses] = useState([])
+  const [customers, setCustomers] = useState([])
   const [loading, setLoading] = useState(true)
   const [expanded, setExpanded] = useState(null)
   const [items, setItems] = useState({})
@@ -20,7 +21,13 @@ export default function Outbound() {
     Promise.all([
       supabase.from('outbound_orders').select('*').order('created_at', { ascending: false }),
       supabase.from('warehouses').select('*'),
-    ]).then(([o, w]) => { setOrders(o.data || []); setWarehouses(w.data || []); setLoading(false) })
+      supabase.from('customers').select('id, name, credit_limit, outstanding_amount'),
+    ]).then(([o, w, c]) => {
+      setOrders(o.data || [])
+      setWarehouses(w.data || [])
+      setCustomers(c.data || [])
+      setLoading(false)
+    })
   }, [])
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
@@ -50,6 +57,17 @@ export default function Outbound() {
     if (data) setOrders(prev => prev.map(o => o.id === id ? data : o))
   }
 
+  // CRM 信用管控：查詢客戶欠款狀態
+  const getCreditWarning = (customerName) => {
+    const c = customers.find(c => c.name === customerName)
+    if (!c || !c.credit_limit || c.credit_limit === 0) return null
+    const outstanding = c.outstanding_amount || 0
+    const ratio = outstanding / c.credit_limit
+    if (ratio >= 1) return { level: 'danger', msg: `⛔ 欠款 $${outstanding.toLocaleString()} 已超過信用額度 $${c.credit_limit.toLocaleString()}，建議暫停出貨` }
+    if (ratio >= 0.8) return { level: 'warning', msg: `⚠ 欠款 $${outstanding.toLocaleString()} 已達信用額度 ${Math.round(ratio * 100)}%，請注意` }
+    return null
+  }
+
   if (loading) return <LoadingSpinner />
 
   return (
@@ -75,70 +93,93 @@ export default function Outbound() {
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {orders.map(o => (
-          <div key={o.id} className="card">
-            <div className="card-body" style={{ cursor: 'pointer' }} onClick={() => toggleExpand(o.id)}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  {expanded === o.id ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-                  <div>
-                    <div style={{ fontWeight: 700 }}>{o.order_number}</div>
-                    <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{o.customer} · {o.carrier} · 截止：{o.due_date || '-'}</div>
-                    {o.tracking_number && <div style={{ fontSize: 11, color: 'var(--accent-cyan)' }}>單號：{o.tracking_number}</div>}
+        {orders.map(o => {
+          const creditWarning = getCreditWarning(o.customer)
+          return (
+            <div key={o.id} className="card">
+              {/* CRM 信用警告 */}
+              {creditWarning && (
+                <div style={{ padding: '8px 16px', background: creditWarning.level === 'danger' ? 'var(--accent-red-dim)' : 'var(--accent-orange-dim)', borderBottom: `1px solid ${creditWarning.level === 'danger' ? 'var(--accent-red)' : 'var(--accent-orange)'}`, fontSize: 12, fontWeight: 600, color: creditWarning.level === 'danger' ? 'var(--accent-red)' : 'var(--accent-orange)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <AlertTriangle size={14} />
+                  CRM 信用管控：{creditWarning.msg}
+                </div>
+              )}
+
+              <div className="card-body" style={{ cursor: 'pointer' }} onClick={() => toggleExpand(o.id)}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    {expanded === o.id ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                    <div>
+                      <div style={{ fontWeight: 700 }}>{o.order_number}</div>
+                      <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{o.customer} · {o.carrier} · 截止：{o.due_date || '-'}</div>
+                      {o.tracking_number && <div style={{ fontSize: 11, color: 'var(--accent-cyan)' }}>單號：{o.tracking_number}</div>}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <select className="form-input" style={{ padding: '2px 8px', fontSize: 12 }} value={o.status} onClick={e => e.stopPropagation()} onChange={e => updateStatus(o.id, e.target.value)}>
+                      {STATUSES.map(s => <option key={s}>{s}</option>)}
+                    </select>
                   </div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <select className="form-input" style={{ padding: '2px 8px', fontSize: 12 }} value={o.status} onClick={e => e.stopPropagation()} onChange={e => updateStatus(o.id, e.target.value)}>
-                    {STATUSES.map(s => <option key={s}>{s}</option>)}
-                  </select>
-                </div>
               </div>
+
+              {expanded === o.id && (
+                <div style={{ borderTop: '1px solid var(--border-subtle)', padding: '12px 16px' }}>
+                  <div style={{ display: 'flex', gap: 8, marginBottom: 12, alignItems: 'center' }}>
+                    <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>物流單號：</span>
+                    <input
+                      className="form-input"
+                      type="text"
+                      style={{ width: 200, padding: '4px 8px', fontSize: 12 }}
+                      defaultValue={o.tracking_number || ''}
+                      placeholder="輸入後自動標記已出貨"
+                      onBlur={e => e.target.value && updateTracking(o.id, e.target.value)}
+                    />
+                  </div>
+                  {(items[o.id] || []).length === 0 ? (
+                    <div style={{ color: 'var(--text-muted)', fontSize: 13, textAlign: 'center', padding: '8px 0' }}>尚無明細</div>
+                  ) : (
+                    <table className="data-table">
+                      <thead><tr><th>品號</th><th>品名</th><th>應揀數量</th><th>實揀數量</th><th>儲位</th><th>狀態</th></tr></thead>
+                      <tbody>
+                        {items[o.id].map(item => (
+                          <tr key={item.id}>
+                            <td style={{ fontFamily: 'monospace' }}>{item.sku_code}</td>
+                            <td>{item.sku_name}</td>
+                            <td>{item.quantity}</td>
+                            <td style={{ fontWeight: 600, color: item.picked_qty >= item.quantity ? 'var(--accent-green)' : 'var(--text-primary)' }}>{item.picked_qty}</td>
+                            <td style={{ fontSize: 12 }}>{item.bin_code || '-'}</td>
+                            <td><span className={`badge ${item.status === '已揀貨' ? 'badge-success' : 'badge-warning'}`}><span className="badge-dot"></span>{item.status}</span></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              )}
             </div>
-            {expanded === o.id && (
-              <div style={{ borderTop: '1px solid var(--border-subtle)', padding: '12px 16px' }}>
-                {/* 填寫物流單號 */}
-                <div style={{ display: 'flex', gap: 8, marginBottom: 12, alignItems: 'center' }}>
-                  <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>物流單號：</span>
-                  <input
-                    className="form-input"
-                    type="text"
-                    style={{ width: 200, padding: '4px 8px', fontSize: 12 }}
-                    defaultValue={o.tracking_number || ''}
-                    placeholder="輸入後自動標記已出貨"
-                    onBlur={e => e.target.value && updateTracking(o.id, e.target.value)}
-                  />
-                </div>
-                {(items[o.id] || []).length === 0 ? (
-                  <div style={{ color: 'var(--text-muted)', fontSize: 13, textAlign: 'center', padding: '8px 0' }}>尚無明細</div>
-                ) : (
-                  <table className="data-table">
-                    <thead><tr><th>品號</th><th>品名</th><th>應揀數量</th><th>實揀數量</th><th>儲位</th><th>狀態</th></tr></thead>
-                    <tbody>
-                      {items[o.id].map(item => (
-                        <tr key={item.id}>
-                          <td style={{ fontFamily: 'monospace' }}>{item.sku_code}</td>
-                          <td>{item.sku_name}</td>
-                          <td>{item.quantity}</td>
-                          <td style={{ fontWeight: 600, color: item.picked_qty >= item.quantity ? 'var(--accent-green)' : 'var(--text-primary)' }}>{item.picked_qty}</td>
-                          <td style={{ fontSize: 12 }}>{item.bin_code || '-'}</td>
-                          <td><span className={`badge ${item.status === '已揀貨' ? 'badge-success' : 'badge-warning'}`}><span className="badge-dot"></span>{item.status}</span></td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-              </div>
-            )}
-          </div>
-        ))}
+          )
+        })}
       </div>
 
       {showModal && (
         <Modal title="新增出貨單" onClose={() => setShowModal(false)} onSubmit={handleSubmit}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <Field label="訂單號 *"><input className="form-input" type="text" style={{ width: '100%' }} placeholder="ORD-2026-001" value={form.order_number} onChange={e => set('order_number', e.target.value)} /></Field>
-            <Field label="客戶 *"><input className="form-input" type="text" style={{ width: '100%' }} placeholder="客戶名稱" value={form.customer} onChange={e => set('customer', e.target.value)} /></Field>
+            <Field label="客戶 *">
+              <input className="form-input" type="text" style={{ width: '100%' }} list="cust-list" placeholder="客戶名稱" value={form.customer} onChange={e => set('customer', e.target.value)} />
+              <datalist id="cust-list">{customers.map(c => <option key={c.id} value={c.name} />)}</datalist>
+            </Field>
           </div>
+          {/* 即時信用檢查 */}
+          {form.customer && (() => {
+            const w = getCreditWarning(form.customer)
+            return w ? (
+              <div style={{ padding: '8px 12px', borderRadius: 8, background: w.level === 'danger' ? 'var(--accent-red-dim)' : 'var(--accent-orange-dim)', fontSize: 12, fontWeight: 600, color: w.level === 'danger' ? 'var(--accent-red)' : 'var(--accent-orange)' }}>
+                {w.msg}
+              </div>
+            ) : null
+          })()}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <Field label="物流商">
               <select className="form-input" style={{ width: '100%' }} value={form.carrier} onChange={e => set('carrier', e.target.value)}>

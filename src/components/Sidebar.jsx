@@ -8,7 +8,8 @@ import {
   Eye, ListChecks, CheckSquare, Building, MapPin, Network,
   UserCircle, MessageCircle, FileText, Zap, Bell, UserCog,
   ScrollText, Settings, BookOpen, Bot, Globe, Award, LogOut,
-  Warehouse, PackageOpen, Truck, BarChart2, Package
+  Warehouse, PackageOpen, Truck, BarChart2, Package,
+  Handshake, TrendingUp, Megaphone, HeadphonesIcon
 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 
@@ -40,6 +41,7 @@ const navSections = [
           { icon: ArrowRightLeft, label: '轉調紀錄', path: '/hr/transfer' },
           { icon: Plane, label: '公出差旅', path: '/hr/travel' },
           { icon: Receipt, label: '費用核銷', path: '/hr/expenses' },
+          { icon: DollarSign, label: '績效獎金', path: '/hr/bonus' },
         ]
       }
     ]
@@ -73,6 +75,37 @@ const navSections = [
           { icon: MessageCircle, label: 'LINE', path: '/org/line' },
           { icon: FileText, label: '模單', path: '/org/templates' },
         ]
+      },
+    ]
+  },
+  {
+    label: 'CRM 客戶管理',
+    items: [
+      {
+        icon: Handshake, label: 'CRM 客戶管理', path: '/crm',
+        children: [
+          { icon: Eye, label: '總覽', path: '/crm/overview' },
+          { icon: Users, label: '客戶管理', path: '/crm/customers' },
+          { icon: TrendingUp, label: '銷售漏斗', path: '/crm/pipeline' },
+          { icon: Megaphone, label: '行銷自動化', path: '/crm/marketing' },
+          { icon: HeadphonesIcon, label: '客服工單', path: '/crm/service' },
+        ]
+      }
+    ]
+  },
+  {
+    label: 'WMS 倉儲管理',
+    items: [
+      {
+        icon: Warehouse, label: 'WMS 倉儲管理', path: '/wms',
+        children: [
+          { icon: BarChart2, label: '倉庫總覽', path: '/wms/overview' },
+          { icon: Package, label: '商品主檔', path: '/wms/skus' },
+          { icon: PackageOpen, label: '進貨管理', path: '/wms/inbound' },
+          { icon: BarChart3, label: '庫存管理', path: '/wms/inventory' },
+          { icon: Truck, label: '出貨管理', path: '/wms/outbound' },
+          { icon: BarChart2, label: '異常與報表', path: '/wms/reports' },
+        ]
       }
     ]
   },
@@ -85,22 +118,6 @@ const navSections = [
       { icon: ScrollText, label: '操作紀錄', path: '/system/audit' },
       { icon: Award, label: '績效管理', path: '/system/performance' },
       { icon: Settings, label: '系統設定', path: '/system/settings' },
-    ]
-  },
-  {
-    label: 'WMS 倉庫',
-    items: [
-      {
-        icon: Warehouse, label: 'WMS 倉庫管理', path: '/wms',
-        children: [
-          { icon: BarChart2, label: '倉庫總覽', path: '/wms/overview' },
-          { icon: Package, label: '商品主檔', path: '/wms/skus' },
-          { icon: PackageOpen, label: '進貨管理', path: '/wms/inbound' },
-          { icon: BarChart3, label: '庫存管理', path: '/wms/inventory' },
-          { icon: Truck, label: '出貨管理', path: '/wms/outbound' },
-          { icon: BarChart2, label: '異常與報表', path: '/wms/reports' },
-        ]
-      }
     ]
   },
   {

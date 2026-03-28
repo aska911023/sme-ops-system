@@ -1,21 +1,32 @@
 import { useState, useEffect } from 'react'
 import { Plus } from 'lucide-react'
 import { getExpenses, createExpense, updateExpenseStatus } from '../../lib/db'
+import { supabase } from '../../lib/supabase'
 import LoadingSpinner from '../../components/LoadingSpinner'
 import Modal, { Field } from '../../components/Modal'
 
-const EMPLOYEES = ['王小明', '林美麗', '陳大偉', '張雅婷', '黃志強', '劉佳玲', '吳建宏', '蔡心怡']
 const CATEGORIES = ['交通', '住宿', '餐飲', '設備', '其他']
 
 export default function Expenses() {
   const [expenses, setExpenses] = useState([])
+  const [employees, setEmployees] = useState([])
+  const [departments, setDepartments] = useState([])
+  const [deptFilter, setDeptFilter] = useState('')
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
-  const [form, setForm] = useState({ employee: EMPLOYEES[0], category: CATEGORIES[0], amount: '', date: '', description: '', receipt: true })
+  const [form, setForm] = useState({ employee: '', category: CATEGORIES[0], amount: '', date: '', description: '', receipt: true })
 
   useEffect(() => {
-    getExpenses().then(({ data }) => {
-      setExpenses(data || [])
+    Promise.all([
+      getExpenses(),
+      supabase.from('employees').select('id, name, department, position').eq('status', '在職').order('name'),
+      supabase.from('departments').select('*').order('name'),
+    ]).then(([ex, e, d]) => {
+      const emps = e.data || []
+      setExpenses(ex.data || [])
+      setEmployees(emps)
+      setDepartments(d.data || [])
+      setForm(f => ({ ...f, employee: emps[0]?.name || '' }))
       setLoading(false)
     })
   }, [])
@@ -23,12 +34,12 @@ export default function Expenses() {
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
   const handleSubmit = async () => {
-    if (!form.amount || !form.date) return
+    if (!form.amount || !form.date || !form.employee) return
     const { data } = await createExpense({ ...form, amount: Number(form.amount), status: '待審核' })
     if (data) {
       setExpenses(prev => [...prev, data])
       setShowModal(false)
-      setForm({ employee: EMPLOYEES[0], category: CATEGORIES[0], amount: '', date: '', description: '', receipt: true })
+      setForm({ employee: employees[0]?.name || '', category: CATEGORIES[0], amount: '', date: '', description: '', receipt: true })
     }
   }
 
@@ -38,6 +49,22 @@ export default function Expenses() {
   }
 
   if (loading) return <LoadingSpinner />
+
+  const getEmpDept = (name) => employees.find(e => e.name === name)?.department || ''
+
+  const filtered = expenses.filter(e =>
+    deptFilter === '' || getEmpDept(e.employee) === deptFilter
+  )
+
+  const deptBtnStyle = (active) => ({
+    padding: '5px 12px', borderRadius: 8, border: '1px solid var(--border-medium)',
+    background: active ? 'var(--accent-cyan)' : 'var(--bg-card)',
+    color: active ? '#fff' : 'var(--text-secondary)',
+    cursor: 'pointer', fontSize: 12, fontWeight: 500
+  })
+
+  const totalPending = filtered.filter(e => e.status === '待審核').reduce((s, e) => s + Number(e.amount), 0)
+  const totalApproved = filtered.filter(e => e.status === '已核銷').reduce((s, e) => s + Number(e.amount), 0)
 
   return (
     <div className="fade-in">
@@ -50,14 +77,40 @@ export default function Expenses() {
           <button className="btn btn-primary" onClick={() => setShowModal(true)}><Plus size={14} /> 新增報銷</button>
         </div>
       </div>
+
+      {/* 部門篩選 */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+        <button style={deptBtnStyle(deptFilter === '')} onClick={() => setDeptFilter('')}>全部部門</button>
+        {departments.map(d => (
+          <button key={d.id} style={deptBtnStyle(deptFilter === d.name)} onClick={() => setDeptFilter(d.name)}>{d.name}</button>
+        ))}
+      </div>
+
+      <div className="stat-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+        <div className="stat-card" style={{ '--card-accent': 'var(--accent-orange)', '--card-accent-dim': 'var(--accent-orange-dim)' }}>
+          <div className="stat-card-label">待審核</div>
+          <div className="stat-card-value">{filtered.filter(e => e.status === '待審核').length}</div>
+        </div>
+        <div className="stat-card" style={{ '--card-accent': 'var(--accent-green)', '--card-accent-dim': 'var(--accent-green-dim)' }}>
+          <div className="stat-card-label">已核銷金額</div>
+          <div className="stat-card-value">NT$ {totalApproved.toLocaleString()}</div>
+        </div>
+        <div className="stat-card" style={{ '--card-accent': 'var(--accent-cyan)', '--card-accent-dim': 'var(--accent-cyan-dim)' }}>
+          <div className="stat-card-label">待核銷金額</div>
+          <div className="stat-card-value">NT$ {totalPending.toLocaleString()}</div>
+        </div>
+      </div>
+
       <div className="card">
         <div className="data-table-wrapper">
           <table className="data-table">
-            <thead><tr><th>員工</th><th>類別</th><th>金額</th><th>日期</th><th>說明</th><th>收據</th><th>狀態</th><th>操作</th></tr></thead>
+            <thead><tr><th>員工</th><th>部門</th><th>類別</th><th>金額</th><th>日期</th><th>說明</th><th>收據</th><th>狀態</th><th>操作</th></tr></thead>
             <tbody>
-              {expenses.map(e => (
+              {filtered.length === 0 && <tr><td colSpan={9} style={{ textAlign: 'center', color: 'var(--text-muted)' }}>尚無報銷申請</td></tr>}
+              {filtered.map(e => (
                 <tr key={e.id}>
-                  <td>{e.employee}</td>
+                  <td style={{ fontWeight: 600 }}>{e.employee}</td>
+                  <td style={{ fontSize: 12, color: 'var(--text-muted)' }}>{getEmpDept(e.employee) || '-'}</td>
                   <td><span className="badge badge-info">{e.category}</span></td>
                   <td style={{ fontWeight: 600 }}>NT$ {Number(e.amount).toLocaleString()}</td>
                   <td>{e.date}</td>
@@ -82,9 +135,16 @@ export default function Expenses() {
 
       {showModal && (
         <Modal title="新增報銷申請" onClose={() => setShowModal(false)} onSubmit={handleSubmit}>
-          <Field label="員工">
+          <Field label="員工 *">
             <select className="form-input" style={{ width: '100%' }} value={form.employee} onChange={e => set('employee', e.target.value)}>
-              {EMPLOYEES.map(e => <option key={e}>{e}</option>)}
+              <option value="">請選擇員工</option>
+              {departments.map(d => (
+                <optgroup key={d.id} label={d.name}>
+                  {employees.filter(e => e.department === d.name).map(e => (
+                    <option key={e.id} value={e.name}>{e.name}｜{e.position}</option>
+                  ))}
+                </optgroup>
+              ))}
             </select>
           </Field>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>

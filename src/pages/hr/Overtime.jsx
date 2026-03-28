@@ -1,20 +1,30 @@
 import { useState, useEffect } from 'react'
 import { Plus } from 'lucide-react'
 import { getOvertimeRequests, createOvertimeRequest, updateOvertimeStatus } from '../../lib/db'
+import { supabase } from '../../lib/supabase'
 import LoadingSpinner from '../../components/LoadingSpinner'
 import Modal, { Field } from '../../components/Modal'
 
-const EMPLOYEES = ['王小明', '林美麗', '陳大偉', '張雅婷', '黃志強', '劉佳玲', '吳建宏', '蔡心怡']
-
 export default function Overtime() {
   const [records, setRecords] = useState([])
+  const [employees, setEmployees] = useState([])
+  const [departments, setDepartments] = useState([])
+  const [deptFilter, setDeptFilter] = useState('')
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
-  const [form, setForm] = useState({ employee: EMPLOYEES[0], date: '', hours: 1, reason: '' })
+  const [form, setForm] = useState({ employee: '', date: '', hours: 1, reason: '' })
 
   useEffect(() => {
-    getOvertimeRequests().then(({ data }) => {
-      setRecords(data || [])
+    Promise.all([
+      getOvertimeRequests(),
+      supabase.from('employees').select('id, name, department, position').eq('status', '在職').order('name'),
+      supabase.from('departments').select('*').order('name'),
+    ]).then(([r, e, d]) => {
+      const emps = e.data || []
+      setRecords(r.data || [])
+      setEmployees(emps)
+      setDepartments(d.data || [])
+      setForm(f => ({ ...f, employee: emps[0]?.name || '' }))
       setLoading(false)
     })
   }, [])
@@ -22,12 +32,12 @@ export default function Overtime() {
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
   const handleSubmit = async () => {
-    if (!form.date) return
+    if (!form.date || !form.employee) return
     const { data } = await createOvertimeRequest({ ...form, status: '待審核' })
     if (data) {
       setRecords(prev => [...prev, data])
       setShowModal(false)
-      setForm({ employee: EMPLOYEES[0], date: '', hours: 1, reason: '' })
+      setForm({ employee: employees[0]?.name || '', date: '', hours: 1, reason: '' })
     }
   }
 
@@ -37,6 +47,21 @@ export default function Overtime() {
   }
 
   if (loading) return <LoadingSpinner />
+
+  const getEmpDept = (name) => employees.find(e => e.name === name)?.department || ''
+
+  const filtered = records.filter(r =>
+    deptFilter === '' || getEmpDept(r.employee) === deptFilter
+  )
+
+  const deptBtnStyle = (active) => ({
+    padding: '5px 12px', borderRadius: 8, border: '1px solid var(--border-medium)',
+    background: active ? 'var(--accent-cyan)' : 'var(--bg-card)',
+    color: active ? '#fff' : 'var(--text-secondary)',
+    cursor: 'pointer', fontSize: 12, fontWeight: 500
+  })
+
+  const totalHours = filtered.filter(r => r.status === '已核准').reduce((s, r) => s + (r.hours || 0), 0)
 
   return (
     <div className="fade-in">
@@ -50,17 +75,42 @@ export default function Overtime() {
         </div>
       </div>
 
+      {/* 部門篩選 */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+        <button style={deptBtnStyle(deptFilter === '')} onClick={() => setDeptFilter('')}>全部部門</button>
+        {departments.map(d => (
+          <button key={d.id} style={deptBtnStyle(deptFilter === d.name)} onClick={() => setDeptFilter(d.name)}>{d.name}</button>
+        ))}
+      </div>
+
+      <div className="stat-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+        <div className="stat-card" style={{ '--card-accent': 'var(--accent-orange)', '--card-accent-dim': 'var(--accent-orange-dim)' }}>
+          <div className="stat-card-label">待審核</div>
+          <div className="stat-card-value">{filtered.filter(r => r.status === '待審核').length}</div>
+        </div>
+        <div className="stat-card" style={{ '--card-accent': 'var(--accent-green)', '--card-accent-dim': 'var(--accent-green-dim)' }}>
+          <div className="stat-card-label">已核准</div>
+          <div className="stat-card-value">{filtered.filter(r => r.status === '已核准').length}</div>
+        </div>
+        <div className="stat-card" style={{ '--card-accent': 'var(--accent-cyan)', '--card-accent-dim': 'var(--accent-cyan-dim)' }}>
+          <div className="stat-card-label">核准總時數</div>
+          <div className="stat-card-value">{totalHours}h</div>
+        </div>
+      </div>
+
       <div className="card">
         <div className="card-header">
           <div className="card-title"><span className="card-title-icon">📋</span> 加班紀錄</div>
         </div>
         <div className="data-table-wrapper">
           <table className="data-table">
-            <thead><tr><th>員工</th><th>日期</th><th>時數</th><th>原因</th><th>狀態</th><th>操作</th></tr></thead>
+            <thead><tr><th>員工</th><th>部門</th><th>日期</th><th>時數</th><th>原因</th><th>狀態</th><th>操作</th></tr></thead>
             <tbody>
-              {records.map(o => (
+              {filtered.length === 0 && <tr><td colSpan={7} style={{ textAlign: 'center', color: 'var(--text-muted)' }}>尚無加班紀錄</td></tr>}
+              {filtered.map(o => (
                 <tr key={o.id}>
-                  <td>{o.employee}</td>
+                  <td style={{ fontWeight: 600 }}>{o.employee}</td>
+                  <td style={{ fontSize: 12, color: 'var(--text-muted)' }}>{getEmpDept(o.employee) || '-'}</td>
                   <td>{o.date}</td>
                   <td>{o.hours}h</td>
                   <td>{o.reason}</td>
@@ -83,9 +133,16 @@ export default function Overtime() {
 
       {showModal && (
         <Modal title="新增加班申請" onClose={() => setShowModal(false)} onSubmit={handleSubmit}>
-          <Field label="員工">
+          <Field label="員工 *">
             <select className="form-input" style={{ width: '100%' }} value={form.employee} onChange={e => set('employee', e.target.value)}>
-              {EMPLOYEES.map(e => <option key={e}>{e}</option>)}
+              <option value="">請選擇員工</option>
+              {departments.map(d => (
+                <optgroup key={d.id} label={d.name}>
+                  {employees.filter(e => e.department === d.name).map(e => (
+                    <option key={e.id} value={e.name}>{e.name}｜{e.position}</option>
+                  ))}
+                </optgroup>
+              ))}
             </select>
           </Field>
           <Field label="加班日期">

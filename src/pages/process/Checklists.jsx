@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Plus } from 'lucide-react'
 import { getChecklists, createChecklist } from '../../lib/db'
+import { supabase } from '../../lib/supabase'
 import LoadingSpinner from '../../components/LoadingSpinner'
 import Modal, { Field } from '../../components/Modal'
 
@@ -8,12 +9,24 @@ const CATEGORIES = ['HR', '財務', '業務', '行政', '研發', '客服', '安
 
 export default function Checklists() {
   const [checklists, setChecklists] = useState([])
+  const [employees, setEmployees] = useState([])
+  const [departments, setDepartments] = useState([])
+  const [deptFilter, setDeptFilter] = useState('')
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [form, setForm] = useState({ name: '', category: CATEGORIES[0], assignee: '', items: '', completed: '0' })
 
   useEffect(() => {
-    getChecklists().then(({ data }) => { setChecklists(data || []); setLoading(false) })
+    Promise.all([
+      getChecklists(),
+      supabase.from('employees').select('id, name, department, position').eq('status', '在職').order('name'),
+      supabase.from('departments').select('*').order('name'),
+    ]).then(([c, e, d]) => {
+      setChecklists(c.data || [])
+      setEmployees(e.data || [])
+      setDepartments(d.data || [])
+      setLoading(false)
+    })
   }, [])
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
@@ -36,6 +49,19 @@ export default function Checklists() {
 
   if (loading) return <LoadingSpinner />
 
+  const getEmpDept = (name) => employees.find(e => e.name === name)?.department || ''
+
+  const filtered = checklists.filter(c =>
+    deptFilter === '' || getEmpDept(c.assignee) === deptFilter
+  )
+
+  const deptBtnStyle = (active) => ({
+    padding: '5px 12px', borderRadius: 8, border: '1px solid var(--border-medium)',
+    background: active ? 'var(--accent-cyan)' : 'var(--bg-card)',
+    color: active ? '#fff' : 'var(--text-secondary)',
+    cursor: 'pointer', fontSize: 12, fontWeight: 500
+  })
+
   return (
     <div className="fade-in">
       <div className="page-header">
@@ -48,18 +74,26 @@ export default function Checklists() {
         </div>
       </div>
 
+      {/* 部門篩選 */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+        <button style={deptBtnStyle(deptFilter === '')} onClick={() => setDeptFilter('')}>全部部門</button>
+        {departments.map(d => (
+          <button key={d.id} style={deptBtnStyle(deptFilter === d.name)} onClick={() => setDeptFilter(d.name)}>{d.name}</button>
+        ))}
+      </div>
+
       <div className="stat-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
         <div className="stat-card" style={{ '--card-accent': 'var(--accent-green)', '--card-accent-dim': 'var(--accent-green-dim)' }}>
           <div className="stat-card-label">已完成清單</div>
-          <div className="stat-card-value">{checklists.filter(c => c.items > 0 && c.completed === c.items).length}</div>
+          <div className="stat-card-value">{filtered.filter(c => c.items > 0 && c.completed === c.items).length}</div>
         </div>
         <div className="stat-card" style={{ '--card-accent': 'var(--accent-cyan)', '--card-accent-dim': 'var(--accent-cyan-dim)' }}>
           <div className="stat-card-label">進行中清單</div>
-          <div className="stat-card-value">{checklists.filter(c => c.completed > 0 && c.completed < c.items).length}</div>
+          <div className="stat-card-value">{filtered.filter(c => c.completed > 0 && c.completed < c.items).length}</div>
         </div>
         <div className="stat-card" style={{ '--card-accent': 'var(--accent-orange)', '--card-accent-dim': 'var(--accent-orange-dim)' }}>
           <div className="stat-card-label">未開始清單</div>
-          <div className="stat-card-value">{checklists.filter(c => c.completed === 0).length}</div>
+          <div className="stat-card-value">{filtered.filter(c => c.completed === 0).length}</div>
         </div>
       </div>
 
@@ -70,17 +104,19 @@ export default function Checklists() {
         <div className="data-table-wrapper">
           <table className="data-table">
             <thead>
-              <tr><th>清單名稱</th><th>分類</th><th>負責人</th><th>完成進度</th><th>狀態</th></tr>
+              <tr><th>清單名稱</th><th>分類</th><th>負責人</th><th>部門</th><th>完成進度</th><th>狀態</th></tr>
             </thead>
             <tbody>
-              {checklists.map(c => {
+              {filtered.length === 0 && <tr><td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-muted)' }}>尚無查核清單</td></tr>}
+              {filtered.map(c => {
                 const pct = c.items > 0 ? Math.round(c.completed / c.items * 100) : 0
                 const status = c.completed === c.items && c.items > 0 ? '已完成' : c.completed === 0 ? '未開始' : '進行中'
                 return (
                   <tr key={c.id}>
                     <td style={{ fontWeight: 500 }}>{c.name}</td>
                     <td><span className="badge badge-cyan">{c.category}</span></td>
-                    <td>{c.assignee}</td>
+                    <td style={{ fontWeight: 600 }}>{c.assignee}</td>
+                    <td style={{ fontSize: 12, color: 'var(--text-muted)' }}>{getEmpDept(c.assignee) || '-'}</td>
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <div className="progress-track" style={{ flex: 1, height: 6 }}>
@@ -119,7 +155,16 @@ export default function Checklists() {
               </select>
             </Field>
             <Field label="負責人">
-              <input className="form-input" type="text" style={{ width: '100%' }} placeholder="員工姓名" value={form.assignee} onChange={e => set('assignee', e.target.value)} />
+              <select className="form-input" style={{ width: '100%' }} value={form.assignee} onChange={e => set('assignee', e.target.value)}>
+                <option value="">請選擇負責人</option>
+                {departments.map(d => (
+                  <optgroup key={d.id} label={d.name}>
+                    {employees.filter(e => e.department === d.name).map(e => (
+                      <option key={e.id} value={e.name}>{e.name}｜{e.position}</option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
             </Field>
           </div>
           <Field label="查核項目數 *">
