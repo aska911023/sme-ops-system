@@ -2,13 +2,6 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import Login from './pages/Login'
 import Demo from './pages/Demo'
-import PortalLayout from './pages/portal/PortalLayout'
-import PortalHome from './pages/portal/PortalHome'
-import Clock from './pages/portal/Clock'
-import MyLeave from './pages/portal/MyLeave'
-import MyExpenses from './pages/portal/MyExpenses'
-import MyTravel from './pages/portal/MyTravel'
-import MyPerformance from './pages/portal/MyPerformance'
 import Sidebar from './components/Sidebar'
 import Dashboard from './pages/Dashboard'
 import Analytics from './pages/Analytics'
@@ -132,7 +125,7 @@ function AdminApp() {
 }
 
 function AppRoutes() {
-  const { user, profile, loading } = useAuth()
+  const { user, loading } = useAuth()
 
   if (loading) {
     return (
@@ -149,24 +142,8 @@ function AppRoutes() {
     </Routes>
   )
 
-  if (profile?.role === 'admin') {
-    return <AdminApp />
-  }
-
-  // Employee portal
-  return (
-    <Routes>
-      <Route path="/portal" element={<PortalLayout />}>
-        <Route index element={<PortalHome />} />
-        <Route path="clock" element={<Clock />} />
-        <Route path="leave" element={<MyLeave />} />
-        <Route path="expenses" element={<MyExpenses />} />
-        <Route path="travel" element={<MyTravel />} />
-        <Route path="performance" element={<MyPerformance />} />
-      </Route>
-      <Route path="*" element={<Navigate to="/portal" replace />} />
-    </Routes>
-  )
+  // All logged-in users go to admin app
+  return <AdminApp />
 }
 
 export default function App() {
