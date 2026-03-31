@@ -1,7 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
-import { AuthProvider, useAuth } from './contexts/AuthContext'
-import Login from './pages/Login'
-import Demo from './pages/Demo'
+import { AuthProvider } from './contexts/AuthContext'
 import Sidebar from './components/Sidebar'
 import Dashboard from './pages/Dashboard'
 import Analytics from './pages/Analytics'
@@ -125,24 +123,6 @@ function AdminApp() {
 }
 
 function AppRoutes() {
-  const { user, loading } = useAuth()
-
-  if (loading) {
-    return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-primary)' }}>
-        <div style={{ color: 'var(--text-muted)', fontSize: 14 }}>載入中...</div>
-      </div>
-    )
-  }
-
-  if (!user) return (
-    <Routes>
-      <Route path="/demo" element={<Demo />} />
-      <Route path="*" element={<Login />} />
-    </Routes>
-  )
-
-  // All logged-in users go to admin app
   return <AdminApp />
 }
 
