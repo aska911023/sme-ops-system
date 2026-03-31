@@ -110,7 +110,7 @@ export default function SOPTemplates() {
     Promise.all([
       supabase.from('sop_templates').select('*').order('id'),
       supabase.from('locations').select('*').order('name'),
-      supabase.from('employees').select('id, name, department, position').eq('status', '在職').order('name'),
+      supabase.from('employees').select('id, name, dept, position').eq('status', '在職').order('name'),
       supabase.from('departments').select('*').order('name'),
     ]).then(async ([t, l, e, d]) => {
       let tpls = t.data || []
@@ -350,7 +350,7 @@ export default function SOPTemplates() {
                     <option value="">請選擇</option>
                     {departments.map(d => (
                       <optgroup key={d.id} label={d.name}>
-                        {employees.filter(e => e.department === d.name).map(e => (
+                        {employees.filter(e => e.dept === d.name).map(e => (
                           <option key={e.id} value={e.name}>{e.name}｜{e.position}</option>
                         ))}
                       </optgroup>
