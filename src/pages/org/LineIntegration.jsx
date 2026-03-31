@@ -1,103 +1,211 @@
-import { useState } from 'react'
-import { MessageCircle, Settings } from 'lucide-react'
-import Modal, { Field } from '../../components/Modal'
-
-const TYPES = ['Notify', 'Messaging API']
-
-const initialChannels = [
-  { id: 1, name: '台北總部通知頻道', type: 'Notify', status: '已連接', lastMessage: '2026-03-27 09:10', members: 5 },
-  { id: 2, name: '主管審批群組', type: 'Messaging API', status: '已連接', lastMessage: '2026-03-26 16:45', members: 3 },
-  { id: 3, name: '人資公告頻道', type: 'Notify', status: '已連接', lastMessage: '2026-03-25 12:00', members: 9 },
-  { id: 4, name: '高雄分店頻道', type: 'Notify', status: '未連接', lastMessage: '-', members: 1 },
-]
+import { useState, useEffect } from 'react'
+import { RefreshCw } from 'lucide-react'
+import { supabase } from '../../lib/supabase'
+import LoadingSpinner from '../../components/LoadingSpinner'
 
 export default function LineIntegration() {
-  const [channels, setChannels] = useState(initialChannels)
-  const [showModal, setShowModal] = useState(false)
-  const [form, setForm] = useState({ name: '', type: TYPES[0], token: '' })
+  const [lineUsers, setLineUsers] = useState([])
+  const [employees, setEmployees] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [tab, setTab] = useState('users')
+  const [saving, setSaving] = useState(null)
 
-  const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
+  useEffect(() => {
+    Promise.all([
+      supabase.from('line_users').select('*').order('last_active', { ascending: false }),
+      supabase.from('employees').select('id, name, department, position, status, line_user_id').order('name'),
+    ]).then(([l, e]) => {
+      setLineUsers(l.data || [])
+      setEmployees(e.data || [])
+      setLoading(false)
+    })
+  }, [])
 
-  const handleSubmit = () => {
-    if (!form.name) return
-    setChannels(prev => [...prev, { id: Date.now(), name: form.name, type: form.type, status: '未連接', lastMessage: '-', members: 0 }])
-    setShowModal(false)
-    setForm({ name: '', type: TYPES[0], token: '' })
+  const handleBind = async (lineUserId, employeeName) => {
+    setSaving(lineUserId)
+
+    // Clear old binding if another employee had this line_user_id
+    await supabase.from('employees').update({ line_user_id: null }).eq('line_user_id', lineUserId)
+
+    if (employeeName) {
+      // Set new binding
+      await supabase.from('employees').update({ line_user_id: lineUserId }).eq('name', employeeName)
+      // Update line_users table
+      await supabase.from('line_users').update({ bound_employee: employeeName }).eq('line_user_id', lineUserId)
+    } else {
+      await supabase.from('line_users').update({ bound_employee: null }).eq('line_user_id', lineUserId)
+    }
+
+    // Refresh
+    const [l, e] = await Promise.all([
+      supabase.from('line_users').select('*').order('last_active', { ascending: false }),
+      supabase.from('employees').select('id, name, department, position, status, line_user_id').order('name'),
+    ])
+    setLineUsers(l.data || [])
+    setEmployees(e.data || [])
+    setSaving(null)
   }
+
+  const getBoundEmployee = (lineUserId) => employees.find(e => e.line_user_id === lineUserId)
+
+  if (loading) return <LoadingSpinner />
+
+  const boundCount = lineUsers.filter(u => getBoundEmployee(u.line_user_id)).length
+  const unboundCount = lineUsers.length - boundCount
+
+  const tabStyle = (active) => ({
+    padding: '8px 18px', borderRadius: 8, border: '1px solid var(--border-medium)',
+    background: active ? 'var(--accent-cyan)' : 'var(--bg-card)',
+    color: active ? '#fff' : 'var(--text-secondary)',
+    cursor: 'pointer', fontSize: 13, fontWeight: 600,
+    display: 'flex', alignItems: 'center', gap: 6,
+  })
 
   return (
     <div className="fade-in">
       <div className="page-header">
         <div className="page-header-row">
           <div>
-            <h2><span className="header-icon">💬</span> LINE 整合</h2>
-            <p>LINE Notify 與 Messaging API 設定</p>
+            <h2><span className="header-icon">💬</span> LINE 管理</h2>
+            <p>管理 LINE 使用者、對應員工帳號</p>
           </div>
-          <button className="btn btn-primary" onClick={() => setShowModal(true)}><MessageCircle size={14} /> 新增頻道</button>
+          <button className="btn btn-secondary" onClick={() => window.location.reload()}><RefreshCw size={14} /> 重新整理</button>
         </div>
       </div>
 
-      <div className="stat-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
-        <div className="stat-card" style={{ '--card-accent': 'var(--accent-green)', '--card-accent-dim': 'var(--accent-green-dim)' }}>
-          <div className="stat-card-label">已連接</div>
-          <div className="stat-card-value">{channels.filter(c => c.status === '已連接').length}</div>
-        </div>
-        <div className="stat-card" style={{ '--card-accent': 'var(--accent-red)', '--card-accent-dim': 'var(--accent-red-dim)' }}>
-          <div className="stat-card-label">未連接</div>
-          <div className="stat-card-value">{channels.filter(c => c.status === '未連接').length}</div>
-        </div>
-        <div className="stat-card" style={{ '--card-accent': 'var(--accent-cyan)', '--card-accent-dim': 'var(--accent-cyan-dim)' }}>
-          <div className="stat-card-label">覆蓋人數</div>
-          <div className="stat-card-value">{channels.filter(c => c.status === '已連接').reduce((s, c) => s + c.members, 0)}</div>
-        </div>
+      {/* Tabs */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+        <button style={tabStyle(tab === 'users')} onClick={() => setTab('users')}>
+          👤 LINE 使用者 ({lineUsers.length})
+        </button>
+        <button style={tabStyle(tab === 'webhook')} onClick={() => setTab('webhook')}>
+          🔗 Webhook
+        </button>
       </div>
 
-      <div className="card">
-        <div className="card-header">
-          <div className="card-title"><span className="card-title-icon">📋</span> 頻道列表</div>
-        </div>
-        <div className="data-table-wrapper">
-          <table className="data-table">
-            <thead>
-              <tr><th>頻道名稱</th><th>類型</th><th>成員數</th><th>最後訊息</th><th>狀態</th><th>設定</th></tr>
-            </thead>
-            <tbody>
-              {channels.map(c => (
-                <tr key={c.id}>
-                  <td style={{ fontWeight: 500 }}>{c.name}</td>
-                  <td><span className="badge badge-cyan">{c.type}</span></td>
-                  <td>{c.members}</td>
-                  <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{c.lastMessage}</td>
-                  <td>
-                    <span className={`badge ${c.status === '已連接' ? 'badge-success' : 'badge-danger'}`}>
-                      <span className="badge-dot"></span>{c.status}
-                    </span>
-                  </td>
-                  <td><button className="btn btn-sm btn-secondary"><Settings size={12} /></button></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {showModal && (
-        <Modal title="新增 LINE 頻道" onClose={() => setShowModal(false)} onSubmit={handleSubmit}>
-          <Field label="頻道名稱 *">
-            <input className="form-input" type="text" style={{ width: '100%' }} placeholder="例：台中分店通知頻道" value={form.name} onChange={e => set('name', e.target.value)} />
-          </Field>
-          <Field label="類型">
-            <select className="form-input" style={{ width: '100%' }} value={form.type} onChange={e => set('type', e.target.value)}>
-              {TYPES.map(t => <option key={t}>{t}</option>)}
-            </select>
-          </Field>
-          <Field label="Access Token">
-            <input className="form-input" type="text" style={{ width: '100%' }} placeholder="LINE Notify Token 或 Channel Access Token" value={form.token} onChange={e => set('token', e.target.value)} />
-          </Field>
-          <div style={{ fontSize: 11, color: 'var(--text-muted)', background: 'var(--glass-light)', padding: '8px 10px', borderRadius: 6 }}>
-            Token 可至 LINE Developers Console 或 LINE Notify 網站取得
+      {tab === 'users' && (
+        <>
+          <div className="stat-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+            <div className="stat-card" style={{ '--card-accent': 'var(--accent-green)', '--card-accent-dim': 'var(--accent-green-dim)' }}>
+              <div className="stat-card-label">已關聯</div>
+              <div className="stat-card-value">{boundCount}</div>
+            </div>
+            <div className="stat-card" style={{ '--card-accent': 'var(--accent-orange)', '--card-accent-dim': 'var(--accent-orange-dim)' }}>
+              <div className="stat-card-label">未關聯</div>
+              <div className="stat-card-value">{unboundCount}</div>
+            </div>
+            <div className="stat-card" style={{ '--card-accent': 'var(--accent-cyan)', '--card-accent-dim': 'var(--accent-cyan-dim)' }}>
+              <div className="stat-card-label">LINE 使用者總數</div>
+              <div className="stat-card-value">{lineUsers.length}</div>
+            </div>
           </div>
-        </Modal>
+
+          <div className="card">
+            <div className="card-header">
+              <div className="card-title"><span className="card-title-icon">📋</span> LINE 使用者列表</div>
+              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>使用者與 Bot 互動後自動出現</span>
+            </div>
+            <div className="data-table-wrapper">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>LINE 名稱</th>
+                    <th>對應系統使用者</th>
+                    <th>狀態</th>
+                    <th>最後活動</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {lineUsers.length === 0 && (
+                    <tr><td colSpan={4} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 40 }}>
+                      尚無 LINE 使用者<br />
+                      <span style={{ fontSize: 12 }}>員工在 LINE 聊天室對 Bot 傳訊後會自動出現在這裡</span>
+                    </td></tr>
+                  )}
+                  {lineUsers.map(u => {
+                    const bound = getBoundEmployee(u.line_user_id)
+                    const isSaving = saving === u.line_user_id
+                    return (
+                      <tr key={u.id}>
+                        <td>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            {u.picture_url ? (
+                              <img src={u.picture_url} alt="" style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--border-medium)' }} />
+                            ) : (
+                              <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--accent-cyan-dim)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: 'var(--accent-cyan)' }}>
+                                {u.display_name?.[0] || '?'}
+                              </div>
+                            )}
+                            <div>
+                              <div style={{ fontWeight: 600, fontSize: 14 }}>{u.display_name || '未知'}</div>
+                              <div style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'monospace' }}>{u.line_user_id?.slice(0, 12)}...</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td>
+                          <select
+                            className="form-input"
+                            style={{ width: '100%', maxWidth: 220, fontSize: 13, opacity: isSaving ? 0.5 : 1 }}
+                            value={bound?.name || ''}
+                            disabled={isSaving}
+                            onChange={e => handleBind(u.line_user_id, e.target.value)}
+                          >
+                            <option value="">— 未對應 —</option>
+                            {employees.filter(e => e.status === '在職').map(e => (
+                              <option key={e.id} value={e.name}>
+                                {e.name}（{e.department} · {e.position}）
+                              </option>
+                            ))}
+                          </select>
+                        </td>
+                        <td>
+                          <span className={`badge ${bound ? 'badge-success' : 'badge-warning'}`}>
+                            <span className="badge-dot"></span>
+                            {bound ? '已關聯' : '未關聯'}
+                          </span>
+                        </td>
+                        <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                          {u.last_active ? new Date(u.last_active).toLocaleString('zh-TW') : '-'}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      )}
+
+      {tab === 'webhook' && (
+        <div className="card">
+          <div className="card-header">
+            <div className="card-title"><span className="card-title-icon">🔗</span> Webhook 設定</div>
+          </div>
+          <div style={{ padding: '8px 0' }}>
+            <div className="info-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--border-subtle)' }}>
+              <span style={{ color: 'var(--text-secondary)', fontSize: 13 }}>Webhook URL</span>
+              <code style={{ fontSize: 12, color: 'var(--accent-cyan)', background: 'var(--accent-cyan-dim)', padding: '4px 10px', borderRadius: 6, cursor: 'pointer' }}
+                onClick={() => { navigator.clipboard?.writeText('https://sme-ops-liff.vercel.app/api/webhook'); alert('已複製！') }}>
+                https://sme-ops-liff.vercel.app/api/webhook
+              </code>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--border-subtle)' }}>
+              <span style={{ color: 'var(--text-secondary)', fontSize: 13 }}>狀態</span>
+              <span className="badge badge-success"><span className="badge-dot"></span>運作中</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--border-subtle)' }}>
+              <span style={{ color: 'var(--text-secondary)', fontSize: 13 }}>支援指令</span>
+              <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>打卡、薪資、假期、任務、庫存、選單</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0' }}>
+              <span style={{ color: 'var(--text-secondary)', fontSize: 13 }}>LIFF App</span>
+              <a href="https://sme-ops-liff.vercel.app" target="_blank" rel="noreferrer" style={{ fontSize: 12, color: 'var(--accent-cyan)' }}>
+                sme-ops-liff.vercel.app ↗
+              </a>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
