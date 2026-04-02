@@ -250,11 +250,13 @@ export default function DemoLanding() {
 
 const styles = {
   wrapper: {
-    minHeight: '100vh',
+    height: '100vh',
     background: 'var(--bg-primary)',
     position: 'relative',
     overflowX: 'hidden',
     overflowY: 'auto',
+    scrollbarWidth: 'thin',
+    scrollbarColor: 'var(--text-muted) transparent',
   },
   backBtn: {
     display: 'inline-flex',
