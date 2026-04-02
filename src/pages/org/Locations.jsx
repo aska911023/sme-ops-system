@@ -8,7 +8,7 @@ export default function Locations() {
   const [stores, setStores] = useState([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
-  const [form, setForm] = useState({ name: '', company: '', address: '', phone: '', manager: '', status: '營運中' })
+  const [form, setForm] = useState({ name: '', company: '', address: '', phone: '', manager: '', status: '營運中', lat: '', lng: '', clock_radius: 300 })
 
   useEffect(() => {
     getStores().then(({ data }) => { setStores(data || []); setLoading(false) })
@@ -18,11 +18,18 @@ export default function Locations() {
 
   const handleSubmit = async () => {
     if (!form.name) return
-    const { data } = await createStore({ ...form, employee_count: 0 })
+    const payload = {
+      ...form,
+      employee_count: 0,
+      lat: form.lat ? parseFloat(form.lat) : null,
+      lng: form.lng ? parseFloat(form.lng) : null,
+      clock_radius: parseInt(form.clock_radius) || 300,
+    }
+    const { data } = await createStore(payload)
     if (data) {
       setStores(prev => [...prev, data])
       setShowModal(false)
-      setForm({ name: '', company: '', address: '', phone: '', manager: '', status: '營運中' })
+      setForm({ name: '', company: '', address: '', phone: '', manager: '', status: '營運中', lat: '', lng: '', clock_radius: 300 })
     }
   }
 
@@ -59,7 +66,7 @@ export default function Locations() {
         <div className="data-table-wrapper">
           <table className="data-table">
             <thead>
-              <tr><th>門市名稱</th><th>所屬公司</th><th>地址</th><th>電話</th><th>負責人</th><th>員工數</th><th>狀態</th></tr>
+              <tr><th>門市名稱</th><th>所屬公司</th><th>地址</th><th>電話</th><th>負責人</th><th>員工數</th><th>打卡範圍</th><th>狀態</th></tr>
             </thead>
             <tbody>
               {stores.map(s => (
@@ -70,6 +77,13 @@ export default function Locations() {
                   <td>{s.phone}</td>
                   <td>{s.manager}</td>
                   <td>{s.employee_count ?? 0}</td>
+                  <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                    {s.lat && s.lng ? (
+                      <span className="badge badge-success"><span className="badge-dot"></span>{s.clock_radius || 300}m</span>
+                    ) : (
+                      <span style={{ color: 'var(--text-muted)' }}>未設定</span>
+                    )}
+                  </td>
                   <td>
                     <span className={`badge ${s.status === '營運中' ? 'badge-success' : 'badge-warning'}`}>
                       <span className="badge-dot"></span>{s.status}
@@ -110,6 +124,23 @@ export default function Locations() {
               <option>已停業</option>
             </select>
           </Field>
+          <div style={{ borderTop: '1px solid var(--border-subtle)', margin: '8px 0', paddingTop: 12 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 10 }}>GPS 打卡範圍設定</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+              <Field label="緯度 (Lat)">
+                <input className="form-input" type="number" step="any" style={{ width: '100%' }} placeholder="25.0330" value={form.lat} onChange={e => set('lat', e.target.value)} />
+              </Field>
+              <Field label="經度 (Lng)">
+                <input className="form-input" type="number" step="any" style={{ width: '100%' }} placeholder="121.5654" value={form.lng} onChange={e => set('lng', e.target.value)} />
+              </Field>
+              <Field label="範圍 (公尺)">
+                <input className="form-input" type="number" style={{ width: '100%' }} placeholder="300" value={form.clock_radius} onChange={e => set('clock_radius', e.target.value)} />
+              </Field>
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
+              提示：可從 Google Maps 右鍵取得座標。員工需在設定範圍內才能打卡。
+            </div>
+          </div>
         </Modal>
       )}
     </div>

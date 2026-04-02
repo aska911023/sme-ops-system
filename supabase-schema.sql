@@ -210,7 +210,10 @@ create table stores (
   phone text,
   manager text,
   employee_count int default 0,
-  status text default '營運中'
+  status text default '營運中',
+  lat double precision,
+  lng double precision,
+  clock_radius int default 300
 );
 
 -- Departments
@@ -379,10 +382,10 @@ insert into checklists (name, items, completed, category, assignee) values
 insert into companies (name, short_name, tax_id, address, phone, stores, employees, status) values
 ('Master AI 科技有限公司', 'Master AI', '12345678', '台北市信義區信義路五段7號', '02-2345-6789', 3, 9, '營運中');
 
-insert into stores (name, company, address, phone, manager, employee_count, status) values
-('台北總部', 'Master AI', '台北市信義區信義路五段7號', '02-2345-6789', '劉佳玲', 5, '營運中'),
-('台中分店', 'Master AI', '台中市西屯區台灣大道三段99號', '04-2345-6789', '陳大偉', 2, '營運中'),
-('高雄分店', 'Master AI', '高雄市前鎮區中華五路789號', '07-2345-6789', '吳建宏', 1, '籌備中');
+insert into stores (name, company, address, phone, manager, employee_count, status, lat, lng, clock_radius) values
+('台北總部', 'Master AI', '台北市信義區信義路五段7號', '02-2345-6789', '劉佳玲', 5, '營運中', 25.0330, 121.5654, 300),
+('台中分店', 'Master AI', '台中市西屯區台灣大道三段99號', '04-2345-6789', '陳大偉', 2, '營運中', 24.1628, 120.6395, 300),
+('高雄分店', 'Master AI', '高雄市前鎮區中華五路789號', '07-2345-6789', '吳建宏', 1, '籌備中', 22.6127, 120.3016, 300);
 
 insert into departments (name, head, member_count, description) values
 ('研發部', '王小明', 3, '負責產品研發與技術創新'),
