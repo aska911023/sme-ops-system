@@ -1,112 +1,124 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
-import { Bell, X, AlertTriangle, Clock, Package, Calendar } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Bell, X, AlertTriangle, Clock, Package, Calendar, Check } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
+// Each notification type maps to a route
+const ROUTES = {
+  leave: '/hr/leave',
+  stock: '/wms/inventory',
+  task: '/process/tasks',
+  late: '/hr/attendance',
+}
+
+function getReadIds() {
+  try { return JSON.parse(localStorage.getItem('sme_notif_read') || '[]') } catch { return [] }
+}
+function markAsRead(id) {
+  const read = getReadIds()
+  if (!read.includes(id)) {
+    read.push(id)
+    // Keep only last 200 entries
+    localStorage.setItem('sme_notif_read', JSON.stringify(read.slice(-200)))
+  }
+}
+function markAllAsRead(ids) {
+  const read = getReadIds()
+  const merged = [...new Set([...read, ...ids])]
+  localStorage.setItem('sme_notif_read', JSON.stringify(merged.slice(-200)))
+}
+
 export default function NotificationCenter() {
+  const navigate = useNavigate()
   const [open, setOpen] = useState(false)
   const [notifications, setNotifications] = useState([])
+  const [readIds, setReadIds] = useState(getReadIds)
   const [loading, setLoading] = useState(false)
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     setLoading(true)
     const items = []
     const today = new Date().toISOString().slice(0, 10)
 
     try {
-      // 1. Pending leave requests
       const { data: leaves } = await supabase
-        .from('leave_requests')
-        .select('*')
-        .eq('status', '待審核')
-        .order('id', { ascending: false })
-        .limit(5)
+        .from('leave_requests').select('*').eq('status', '待審核')
+        .order('id', { ascending: false }).limit(5)
       if (leaves) {
         leaves.forEach(l => items.push({
-          id: `leave-${l.id}`,
-          icon: Calendar,
-          color: 'var(--accent-blue)',
-          dim: 'var(--accent-blue-dim)',
+          id: `leave-${l.id}`, type: 'leave', icon: Calendar,
+          color: 'var(--accent-blue)', dim: 'var(--accent-blue-dim)',
           title: '待審假單',
           desc: `${l.employee} 申請${l.type || '假'}（${l.start_date}）`,
           time: l.start_date,
         }))
       }
 
-      // 2. Low inventory
-      const { data: stocks } = await supabase
-        .from('stock_levels')
-        .select('*')
-        .limit(100)
+      const { data: stocks } = await supabase.from('stock_levels').select('*').limit(100)
       if (stocks) {
         stocks.filter(s => (s.quantity || 0) <= (s.min_qty || 10)).forEach(s => items.push({
-          id: `stock-${s.id}`,
-          icon: Package,
-          color: 'var(--accent-orange)',
-          dim: 'var(--accent-orange-dim)',
+          id: `stock-${s.id}`, type: 'stock', icon: Package,
+          color: 'var(--accent-orange)', dim: 'var(--accent-orange-dim)',
           title: '低庫存警示',
-          desc: `${s.sku_name} 剩餘 ${s.quantity} ${s.unit || '個'}`,
+          desc: `${s.sku_name || '未知品項'} 剩餘 ${s.quantity} ${s.unit || '個'}`,
           time: '即時',
         }))
       }
 
-      // 3. Overdue tasks
       const { data: tasks } = await supabase
-        .from('tasks')
-        .select('*')
-        .neq('status', '已完成')
-        .lt('due_date', today)
-        .order('due_date')
-        .limit(5)
+        .from('tasks').select('*').neq('status', '已完成')
+        .lt('due_date', today).order('due_date').limit(5)
       if (tasks) {
         tasks.forEach(t => items.push({
-          id: `task-${t.id}`,
-          icon: AlertTriangle,
-          color: 'var(--accent-red)',
-          dim: 'var(--accent-red-dim)',
+          id: `task-${t.id}`, type: 'task', icon: AlertTriangle,
+          color: 'var(--accent-red)', dim: 'var(--accent-red-dim)',
           title: '任務逾期',
           desc: `「${t.title}」已超過截止日（${t.due_date}）`,
           time: t.due_date,
         }))
       }
 
-      // 4. Today's late arrivals
       const { data: lateRecords } = await supabase
-        .from('attendance_records')
-        .select('*')
-        .eq('date', today)
-        .eq('status', '遲到')
-        .limit(5)
+        .from('attendance_records').select('*').eq('date', today).eq('status', '遲到').limit(5)
       if (lateRecords) {
         lateRecords.forEach(a => items.push({
-          id: `late-${a.id}`,
-          icon: Clock,
-          color: 'var(--accent-purple)',
-          dim: 'var(--accent-purple-dim)',
+          id: `late-${a.id}`, type: 'late', icon: Clock,
+          color: 'var(--accent-purple)', dim: 'var(--accent-purple-dim)',
           title: '今日遲到',
           desc: `${a.employee} 於 ${a.clock_in} 打卡`,
           time: today,
         }))
       }
-    } catch (e) {
-      // silently fail
-    }
+    } catch (e) { /* ignore */ }
 
     setNotifications(items)
     setLoading(false)
-  }
+  }, [])
 
   useEffect(() => {
     fetchNotifications()
-    const interval = setInterval(fetchNotifications, 60000) // refresh every minute
+    const interval = setInterval(fetchNotifications, 60000)
     return () => clearInterval(interval)
-  }, [])
+  }, [fetchNotifications])
 
-  const count = notifications.length
+  const unreadCount = notifications.filter(n => !readIds.includes(n.id)).length
+
+  const handleClickItem = (n) => {
+    markAsRead(n.id)
+    setReadIds(getReadIds())
+    setOpen(false)
+    const route = ROUTES[n.type]
+    if (route) navigate(route)
+  }
+
+  const handleMarkAllRead = () => {
+    markAllAsRead(notifications.map(n => n.id))
+    setReadIds(getReadIds())
+  }
 
   return (
     <>
-      {/* Bell Button */}
       <button
         onClick={() => setOpen(!open)}
         style={{
@@ -114,92 +126,82 @@ export default function NotificationCenter() {
           background: open ? 'var(--glass-strong)' : 'var(--glass-light)',
           border: `1px solid ${open ? 'var(--border-strong)' : 'var(--border-medium)'}`,
           color: open ? 'var(--accent-cyan)' : 'var(--text-secondary)',
-          cursor: 'pointer',
-          padding: '6px',
-          borderRadius: 'var(--radius-sm)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexShrink: 0,
-          transition: 'all 0.2s ease',
+          cursor: 'pointer', padding: '6px', borderRadius: 'var(--radius-sm)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          flexShrink: 0, transition: 'all 0.2s ease',
         }}
       >
         <Bell size={16} />
-        {count > 0 && (
+        {unreadCount > 0 && (
           <span style={{
             position: 'absolute', top: -4, right: -4,
             width: 16, height: 16, borderRadius: '50%',
-            background: 'var(--accent-red)',
-            color: '#fff', fontSize: 9, fontWeight: 800,
+            background: 'var(--accent-red)', color: '#fff',
+            fontSize: 9, fontWeight: 800,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             boxShadow: '0 2px 6px rgba(248,113,113,0.4)',
           }}>
-            {count > 9 ? '9+' : count}
+            {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
       </button>
 
-      {/* Overlay + Panel (portal to body to escape sidebar overflow:hidden) */}
       {open && createPortal(
         <>
           <div
             onClick={() => setOpen(false)}
-            style={{
-              position: 'fixed', inset: 0, zIndex: 998,
-              background: 'rgba(0,0,0,0.3)',
-            }}
+            style={{ position: 'fixed', inset: 0, zIndex: 998, background: 'rgba(0,0,0,0.3)' }}
           />
           <div style={{
-            position: 'fixed',
-            top: 8,
-            left: 268,
-            width: 380,
-            maxHeight: 'calc(100vh - 16px)',
-            zIndex: 999,
-            background: 'var(--bg-card)',
-            border: '1px solid var(--border-medium)',
-            borderRadius: 'var(--radius-lg)',
-            backdropFilter: 'blur(20px)',
-            boxShadow: 'var(--shadow-xl)',
-            display: 'flex',
-            flexDirection: 'column',
+            position: 'fixed', top: 8, left: 268, width: 380,
+            maxHeight: 'calc(100vh - 16px)', zIndex: 999,
+            background: 'var(--bg-card)', border: '1px solid var(--border-medium)',
+            borderRadius: 'var(--radius-lg)', backdropFilter: 'blur(20px)',
+            boxShadow: 'var(--shadow-xl)', display: 'flex', flexDirection: 'column',
             overflow: 'hidden',
           }}>
             {/* Header */}
             <div style={{
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              padding: '16px 20px',
-              borderBottom: '1px solid var(--border-subtle)',
+              padding: '16px 20px', borderBottom: '1px solid var(--border-subtle)',
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <Bell size={16} style={{ color: 'var(--accent-cyan)' }} />
                 <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)' }}>通知中心</span>
-                {count > 0 && (
+                {unreadCount > 0 && (
                   <span style={{
                     padding: '2px 8px', borderRadius: 99,
                     background: 'var(--accent-red-dim)', color: 'var(--accent-red)',
                     fontSize: 11, fontWeight: 700,
-                  }}>{count} 項</span>
+                  }}>{unreadCount} 項未讀</span>
                 )}
               </div>
-              <button onClick={() => setOpen(false)} style={{
-                background: 'none', border: 'none', color: 'var(--text-muted)',
-                cursor: 'pointer', padding: 4,
-              }}>
-                <X size={16} />
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                {unreadCount > 0 && (
+                  <button onClick={handleMarkAllRead} style={{
+                    background: 'none', border: 'none', color: 'var(--accent-cyan)',
+                    cursor: 'pointer', fontSize: 11, fontWeight: 600,
+                    display: 'flex', alignItems: 'center', gap: 3,
+                  }}>
+                    <Check size={12} /> 全部已讀
+                  </button>
+                )}
+                <button onClick={() => setOpen(false)} style={{
+                  background: 'none', border: 'none', color: 'var(--text-muted)',
+                  cursor: 'pointer', padding: 4,
+                }}>
+                  <X size={16} />
+                </button>
+              </div>
             </div>
 
-            {/* Notification List */}
+            {/* List */}
             <div style={{
-              flex: 1, overflowY: 'auto', padding: '8px 12px',
-              scrollbarWidth: 'thin',
-              scrollbarColor: 'var(--text-muted) transparent',
+              flex: 1, overflowY: 'auto', padding: '4px 12px',
+              scrollbarWidth: 'thin', scrollbarColor: 'var(--text-muted) transparent',
             }}>
               {loading && notifications.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)', fontSize: 13 }}>
-                  載入中...
-                </div>
+                <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)', fontSize: 13 }}>載入中...</div>
               ) : notifications.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: 40 }}>
                   <div style={{ fontSize: 32, marginBottom: 8 }}>✅</div>
@@ -208,12 +210,20 @@ export default function NotificationCenter() {
               ) : (
                 notifications.map(n => {
                   const Icon = n.icon
+                  const isRead = readIds.includes(n.id)
                   return (
-                    <div key={n.id} style={{
-                      display: 'flex', gap: 12, padding: '12px 8px',
-                      borderBottom: '1px solid var(--border-subtle)',
-                      transition: 'background 0.15s',
-                    }}>
+                    <div
+                      key={n.id}
+                      onClick={() => handleClickItem(n)}
+                      style={{
+                        display: 'flex', gap: 12, padding: '12px 8px',
+                        borderBottom: '1px solid var(--border-subtle)',
+                        cursor: 'pointer', borderRadius: 8,
+                        opacity: isRead ? 0.5 : 1,
+                        transition: 'all 0.15s',
+                        background: isRead ? 'transparent' : 'var(--glass-light)',
+                      }}
+                    >
                       <div style={{
                         width: 36, height: 36, borderRadius: 10, flexShrink: 0,
                         background: n.dim, color: n.color,
@@ -222,18 +232,21 @@ export default function NotificationCenter() {
                         <Icon size={16} />
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 2 }}>
+                        <div style={{
+                          fontSize: 13, fontWeight: isRead ? 500 : 700,
+                          color: 'var(--text-primary)', marginBottom: 2,
+                        }}>
                           {n.title}
+                          {!isRead && <span style={{
+                            display: 'inline-block', width: 6, height: 6, borderRadius: '50%',
+                            background: n.color, marginLeft: 6, verticalAlign: 'middle',
+                          }} />}
                         </div>
                         <div style={{
                           fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.4,
                           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                        }}>
-                          {n.desc}
-                        </div>
-                        <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 3 }}>
-                          {n.time}
-                        </div>
+                        }}>{n.desc}</div>
+                        <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 3 }}>{n.time}</div>
                       </div>
                     </div>
                   )
