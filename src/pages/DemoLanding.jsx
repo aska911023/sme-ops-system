@@ -623,7 +623,105 @@ export default function DemoLanding() {
       </section>
 
       {/* ══════════════════════════════════════════
-          SECTION 6: 聯繫我們
+          SECTION 6: 選擇系統進入體驗
+         ══════════════════════════════════════════ */}
+      <section id="enter-system" style={{
+        padding: '80px 40px',
+        background: 'linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-primary) 100%)',
+      }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: 52 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--accent-cyan)', letterSpacing: '2px', marginBottom: 12 }}>TRY IT NOW</div>
+            <h2 style={{ fontSize: 36, fontWeight: 800, margin: 0 }}>選擇系統，開始體驗</h2>
+            <p style={{ color: 'var(--text-secondary)', marginTop: 12, fontSize: 15 }}>點擊任一模組，直接進入系統操作介面</p>
+          </div>
+
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+            gap: '20px',
+          }}>
+            {systems.map((sys) => {
+              const Icon = sys.icon
+              const isHovered = hoveredId === sys.id
+              return (
+                <div
+                  key={sys.id}
+                  style={{
+                    background: 'var(--bg-card)',
+                    borderRadius: 'var(--radius-lg)',
+                    border: `1px solid ${isHovered ? sys.accent : 'var(--border-subtle)'}`,
+                    padding: '28px',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    backdropFilter: 'blur(12px)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    boxShadow: isHovered ? `0 8px 40px ${sys.glow}, var(--shadow-lg)` : 'var(--shadow-md)',
+                    transform: isHovered ? 'translateY(-4px)' : 'translateY(0)',
+                  }}
+                  onMouseEnter={() => setHoveredId(sys.id)}
+                  onMouseLeave={() => setHoveredId(null)}
+                  onClick={() => navigate(sys.path)}
+                >
+                  <div style={{
+                    display: 'flex', justifyContent: 'space-between',
+                    alignItems: 'flex-start', marginBottom: '16px',
+                  }}>
+                    <div style={{
+                      width: '48px', height: '48px', borderRadius: 'var(--radius-md)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      background: sys.accentDim, color: sys.accent,
+                      boxShadow: isHovered ? `0 0 20px ${sys.glow}` : 'none',
+                      transition: 'box-shadow 0.3s ease',
+                    }}>
+                      <Icon size={24} />
+                    </div>
+                    <div style={{
+                      display: 'flex', alignItems: 'center', gap: '4px',
+                      fontSize: '12px', color: 'var(--text-tertiary)', fontWeight: 500,
+                    }}>
+                      <BarChart3 size={12} />
+                      <span>{sys.moduleCount} 個模組</span>
+                    </div>
+                  </div>
+
+                  <h3 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 4px' }}>{sys.title}</h3>
+                  <p style={{ fontSize: '12px', color: 'var(--text-tertiary)', margin: '0 0 12px', fontWeight: 500, letterSpacing: '0.5px', textTransform: 'uppercase' }}>{sys.subtitle}</p>
+                  <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: '0 0 16px', lineHeight: 1.6, flex: 1 }}>{sys.description}</p>
+
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '16px' }}>
+                    {sys.features.map((f) => (
+                      <span key={f} style={{
+                        padding: '3px 10px', borderRadius: 'var(--radius-full)',
+                        fontSize: '11px', fontWeight: 600,
+                        background: sys.accentDim, color: sys.accent,
+                      }}>{f}</span>
+                    ))}
+                  </div>
+
+                  <div style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'flex-end',
+                    gap: '4px', fontSize: '13px', fontWeight: 600,
+                    transition: 'color 0.2s ease', paddingTop: '12px',
+                    borderTop: '1px solid var(--border-subtle)',
+                    color: isHovered ? sys.accent : 'var(--text-tertiary)',
+                  }}>
+                    <span>進入系統</span>
+                    <ArrowRight size={16} style={{
+                      transform: isHovered ? 'translateX(4px)' : 'translateX(0)',
+                      transition: 'transform 0.2s ease',
+                    }} />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════
+          SECTION 7: 聯繫我們
          ══════════════════════════════════════════ */}
       <section style={{ padding: '80px 40px', background: 'var(--bg-secondary)' }}>
         <div style={{ maxWidth: 720, margin: '0 auto' }}>
@@ -741,104 +839,6 @@ export default function DemoLanding() {
               </button>
             </div>
           )}
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════════════
-          SECTION 6: 選擇系統進入體驗
-         ══════════════════════════════════════════ */}
-      <section id="enter-system" style={{
-        padding: '80px 40px',
-        background: 'linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-primary) 100%)',
-      }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 52 }}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--accent-cyan)', letterSpacing: '2px', marginBottom: 12 }}>TRY IT NOW</div>
-            <h2 style={{ fontSize: 36, fontWeight: 800, margin: 0 }}>選擇系統，開始體驗</h2>
-            <p style={{ color: 'var(--text-secondary)', marginTop: 12, fontSize: 15 }}>點擊任一模組，直接進入系統操作介面</p>
-          </div>
-
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-            gap: '20px',
-          }}>
-            {systems.map((sys) => {
-              const Icon = sys.icon
-              const isHovered = hoveredId === sys.id
-              return (
-                <div
-                  key={sys.id}
-                  style={{
-                    background: 'var(--bg-card)',
-                    borderRadius: 'var(--radius-lg)',
-                    border: `1px solid ${isHovered ? sys.accent : 'var(--border-subtle)'}`,
-                    padding: '28px',
-                    cursor: 'pointer',
-                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                    backdropFilter: 'blur(12px)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    boxShadow: isHovered ? `0 8px 40px ${sys.glow}, var(--shadow-lg)` : 'var(--shadow-md)',
-                    transform: isHovered ? 'translateY(-4px)' : 'translateY(0)',
-                  }}
-                  onMouseEnter={() => setHoveredId(sys.id)}
-                  onMouseLeave={() => setHoveredId(null)}
-                  onClick={() => navigate(sys.path)}
-                >
-                  <div style={{
-                    display: 'flex', justifyContent: 'space-between',
-                    alignItems: 'flex-start', marginBottom: '16px',
-                  }}>
-                    <div style={{
-                      width: '48px', height: '48px', borderRadius: 'var(--radius-md)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      background: sys.accentDim, color: sys.accent,
-                      boxShadow: isHovered ? `0 0 20px ${sys.glow}` : 'none',
-                      transition: 'box-shadow 0.3s ease',
-                    }}>
-                      <Icon size={24} />
-                    </div>
-                    <div style={{
-                      display: 'flex', alignItems: 'center', gap: '4px',
-                      fontSize: '12px', color: 'var(--text-tertiary)', fontWeight: 500,
-                    }}>
-                      <BarChart3 size={12} />
-                      <span>{sys.moduleCount} 個模組</span>
-                    </div>
-                  </div>
-
-                  <h3 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 4px' }}>{sys.title}</h3>
-                  <p style={{ fontSize: '12px', color: 'var(--text-tertiary)', margin: '0 0 12px', fontWeight: 500, letterSpacing: '0.5px', textTransform: 'uppercase' }}>{sys.subtitle}</p>
-                  <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: '0 0 16px', lineHeight: 1.6, flex: 1 }}>{sys.description}</p>
-
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '16px' }}>
-                    {sys.features.map((f) => (
-                      <span key={f} style={{
-                        padding: '3px 10px', borderRadius: 'var(--radius-full)',
-                        fontSize: '11px', fontWeight: 600,
-                        background: sys.accentDim, color: sys.accent,
-                      }}>{f}</span>
-                    ))}
-                  </div>
-
-                  <div style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'flex-end',
-                    gap: '4px', fontSize: '13px', fontWeight: 600,
-                    transition: 'color 0.2s ease', paddingTop: '12px',
-                    borderTop: '1px solid var(--border-subtle)',
-                    color: isHovered ? sys.accent : 'var(--text-tertiary)',
-                  }}>
-                    <span>進入系統</span>
-                    <ArrowRight size={16} style={{
-                      transform: isHovered ? 'translateX(4px)' : 'translateX(0)',
-                      transition: 'transform 0.2s ease',
-                    }} />
-                  </div>
-                </div>
-              )
-            })}
-          </div>
         </div>
       </section>
 
