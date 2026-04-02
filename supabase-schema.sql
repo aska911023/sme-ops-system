@@ -266,6 +266,18 @@ create table kpi_data (
   trend text default 'stable'
 );
 
+-- Inquiries (demo contact form)
+create table inquiries (
+  id serial primary key,
+  company_name text,
+  contact_name text,
+  phone text,
+  email text,
+  company_size text,
+  interested_modules text[],
+  created_at timestamptz default now()
+);
+
 -- ============================================================
 --  Seed Data（初始測試資料）
 -- ============================================================

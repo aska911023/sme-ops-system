@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { supabase } from '../lib/supabase'
 import {
   Users, GitBranch, Building2, HeadphonesIcon, Warehouse, Settings,
-  Bot, LayoutDashboard, BarChart3, ArrowRight
+  Bot, LayoutDashboard, BarChart3, ArrowRight, Send, CheckCircle
 } from 'lucide-react'
 
 // Animated counter hook
@@ -173,6 +174,38 @@ export default function DemoLanding() {
   const [visible, setVisible] = useState(false)
   const [activeModule, setActiveModule] = useState(null)
   const [hoveredId, setHoveredId] = useState(null)
+
+  // Inquiry form
+  const [inquiry, setInquiry] = useState({ company_name: '', contact_name: '', phone: '', email: '', company_size: '', interested_modules: [] })
+  const [inquiryStatus, setInquiryStatus] = useState(null) // null | 'sending' | 'success' | 'error'
+  const MODULE_OPTIONS = ['HR 人資管理', 'CRM 客戶管理', 'WMS 倉儲管理', '流程管理', '組織管理', 'AI 工具', '全部都要']
+
+  const toggleModule = (mod) => {
+    setInquiry(prev => ({
+      ...prev,
+      interested_modules: prev.interested_modules.includes(mod)
+        ? prev.interested_modules.filter(m => m !== mod)
+        : [...prev.interested_modules, mod],
+    }))
+  }
+
+  const handleInquirySubmit = async () => {
+    if (!inquiry.company_name || !inquiry.contact_name || !inquiry.phone) return
+    setInquiryStatus('sending')
+    try {
+      await supabase.from('inquiries').insert({
+        company_name: inquiry.company_name,
+        contact_name: inquiry.contact_name,
+        phone: inquiry.phone,
+        email: inquiry.email,
+        company_size: inquiry.company_size,
+        interested_modules: inquiry.interested_modules,
+      })
+      setInquiryStatus('success')
+    } catch {
+      setInquiryStatus('error')
+    }
+  }
 
   useEffect(() => {
     const timer = setTimeout(() => setVisible(true), 300)
@@ -459,7 +492,129 @@ export default function DemoLanding() {
       </section>
 
       {/* ══════════════════════════════════════════
-          SECTION 5: 選擇系統進入體驗
+          SECTION 5: 聯繫我們
+         ══════════════════════════════════════════ */}
+      <section style={{ padding: '80px 40px', background: 'var(--bg-secondary)' }}>
+        <div style={{ maxWidth: 720, margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: 40 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--accent-cyan)', letterSpacing: '2px', marginBottom: 12 }}>CONTACT US</div>
+            <h2 style={{ fontSize: 36, fontWeight: 800, margin: 0 }}>聯繫我們</h2>
+            <p style={{ color: 'var(--text-secondary)', marginTop: 12, fontSize: 15 }}>留下您的資訊，我們將盡快與您聯繫</p>
+          </div>
+
+          {inquiryStatus === 'success' ? (
+            <div style={{
+              background: 'var(--bg-card)', border: '1px solid var(--border-subtle)',
+              borderRadius: 20, padding: '60px 40px', textAlign: 'center',
+              backdropFilter: 'blur(16px)',
+            }}>
+              <CheckCircle size={48} style={{ color: 'var(--accent-green)', marginBottom: 16 }} />
+              <h3 style={{ fontSize: 22, fontWeight: 800, marginBottom: 8, color: 'var(--text-primary)' }}>感謝您的諮詢！</h3>
+              <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>我們會在 1 個工作天內與您聯繫。</p>
+            </div>
+          ) : (
+            <div style={{
+              background: 'var(--bg-card)', border: '1px solid var(--border-subtle)',
+              borderRadius: 20, padding: '32px', backdropFilter: 'blur(16px)',
+            }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+                {[
+                  { key: 'company_name', label: '公司名稱 *', placeholder: '例：好吃餐飲有限公司' },
+                  { key: 'contact_name', label: '聯絡人姓名 *', placeholder: '王小明' },
+                  { key: 'phone', label: '電話 *', placeholder: '0912-345-678' },
+                  { key: 'email', label: 'Email', placeholder: 'example@company.com' },
+                ].map(f => (
+                  <div key={f.key}>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>{f.label}</label>
+                    <input
+                      type="text"
+                      placeholder={f.placeholder}
+                      value={inquiry[f.key]}
+                      onChange={e => setInquiry(prev => ({ ...prev, [f.key]: e.target.value }))}
+                      style={{
+                        width: '100%', padding: '10px 14px', borderRadius: 10,
+                        background: 'var(--glass-medium)', border: '1px solid var(--border-medium)',
+                        color: 'var(--text-primary)', fontSize: 14, outline: 'none',
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>公司人數</label>
+                <select
+                  value={inquiry.company_size}
+                  onChange={e => setInquiry(prev => ({ ...prev, company_size: e.target.value }))}
+                  style={{
+                    width: '100%', padding: '10px 14px', borderRadius: 10,
+                    background: 'var(--glass-medium)', border: '1px solid var(--border-medium)',
+                    color: 'var(--text-primary)', fontSize: 14, outline: 'none', appearance: 'none',
+                  }}
+                >
+                  <option value="">請選擇</option>
+                  <option>1-10 人</option>
+                  <option>11-30 人</option>
+                  <option>31-50 人</option>
+                  <option>51-100 人</option>
+                  <option>100 人以上</option>
+                </select>
+              </div>
+
+              <div style={{ marginBottom: 24 }}>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 10 }}>感興趣的模組</label>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  {MODULE_OPTIONS.map(mod => {
+                    const selected = inquiry.interested_modules.includes(mod)
+                    return (
+                      <button
+                        key={mod}
+                        onClick={() => toggleModule(mod)}
+                        style={{
+                          padding: '6px 16px', borderRadius: 99, fontSize: 13, fontWeight: 600,
+                          cursor: 'pointer', transition: 'all 0.15s', border: 'none',
+                          background: selected ? 'var(--accent-cyan-dim)' : 'var(--glass-medium)',
+                          color: selected ? 'var(--accent-cyan)' : 'var(--text-tertiary)',
+                          outline: selected ? '1.5px solid var(--accent-cyan)' : '1px solid var(--border-medium)',
+                        }}
+                      >
+                        {mod}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {inquiryStatus === 'error' && (
+                <div style={{ color: 'var(--accent-red)', fontSize: 13, marginBottom: 12, textAlign: 'center' }}>
+                  提交失敗，請稍後再試
+                </div>
+              )}
+
+              <button
+                onClick={handleInquirySubmit}
+                disabled={inquiryStatus === 'sending' || !inquiry.company_name || !inquiry.contact_name || !inquiry.phone}
+                style={{
+                  width: '100%', padding: '14px', borderRadius: 12, border: 'none',
+                  background: (!inquiry.company_name || !inquiry.contact_name || !inquiry.phone)
+                    ? 'var(--glass-medium)'
+                    : 'linear-gradient(135deg, var(--accent-cyan), var(--accent-blue))',
+                  color: (!inquiry.company_name || !inquiry.contact_name || !inquiry.phone) ? 'var(--text-muted)' : '#fff',
+                  fontSize: 15, fontWeight: 700, cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                  boxShadow: (inquiry.company_name && inquiry.contact_name && inquiry.phone) ? '0 4px 20px rgba(34,211,238,0.2)' : 'none',
+                }}
+              >
+                <Send size={16} />
+                {inquiryStatus === 'sending' ? '提交中...' : '提交諮詢'}
+              </button>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════
+          SECTION 6: 選擇系統進入體驗
          ══════════════════════════════════════════ */}
       <section id="enter-system" style={{
         padding: '80px 40px',

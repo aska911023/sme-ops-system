@@ -12,6 +12,7 @@ import {
   Handshake, TrendingUp, Megaphone, HeadphonesIcon, Sparkles
 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
+import NotificationCenter from './NotificationCenter'
 
 // Init theme from localStorage
 const savedTheme = typeof window !== 'undefined' ? localStorage.getItem('theme') : null
@@ -180,6 +181,7 @@ export default function Sidebar() {
           <Sparkles size={12} />
           Demo
         </button>
+        <NotificationCenter />
       </div>
 
       <nav className="sidebar-nav">
