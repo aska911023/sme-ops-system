@@ -286,7 +286,7 @@ export default function Dashboard() {
                 }}
               />
               <div style={{
-                position: 'absolute', top: '50%', left: '42%', transform: 'translate(-50%, -50%)',
+                position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
                 textAlign: 'center',
               }}>
                 <div style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-primary)' }}>{workflowProgress}%</div>
