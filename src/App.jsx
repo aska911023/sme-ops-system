@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import Sidebar from './components/Sidebar'
+import DemoLanding from './pages/DemoLanding'
 import Dashboard from './pages/Dashboard'
 import Analytics from './pages/Analytics'
 import HRReport from './pages/hr/HRReport'
@@ -122,14 +123,13 @@ function AdminApp() {
   )
 }
 
-function AppRoutes() {
-  return <AdminApp />
-}
-
 export default function App() {
   return (
     <AuthProvider>
-      <AppRoutes />
+      <Routes>
+        <Route path="/demo" element={<DemoLanding />} />
+        <Route path="/*" element={<AdminApp />} />
+      </Routes>
     </AuthProvider>
   )
 }
