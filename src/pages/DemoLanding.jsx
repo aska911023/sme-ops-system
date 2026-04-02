@@ -533,35 +533,35 @@ export default function DemoLanding() {
           <div style={{ textAlign: 'center' }}>
             <div style={{
               width: 280, margin: '0 auto', borderRadius: 32, overflow: 'hidden',
-              border: '3px solid var(--border-medium)', background: '#06091a',
+              border: '3px solid var(--border-medium)', background: '#f0f2f5',
               boxShadow: 'var(--shadow-xl)',
             }}>
               {/* LIFF header */}
-              <div style={{ background: '#0c1029', padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+              <div style={{ background: '#fff', padding: '12px 16px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(34,211,238,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800, color: '#22d3ee' }}>王</div>
+                  <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(8,145,178,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800, color: '#0891B2' }}>王</div>
                   <div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: '#f1f5f9' }}>午安，王小明</div>
-                    <div style={{ fontSize: 10, color: '#64748b' }}>研發部 · 資深工程師</div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: '#1e293b' }}>午安，王小明</div>
+                    <div style={{ fontSize: 10, color: '#94a3b8' }}>研發部 · 資深工程師</div>
                   </div>
                 </div>
               </div>
               {/* Status */}
               <div style={{ padding: '10px 14px', display: 'flex', gap: 8 }}>
-                <div style={{ flex: 1, background: 'rgba(15,23,55,0.75)', border: '1px solid rgba(148,163,184,0.1)', borderRadius: 10, padding: '8px 10px' }}>
-                  <div style={{ fontSize: 9, color: '#64748b' }}>出勤</div>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: '#22d3ee' }}>已上班</div>
+                <div style={{ flex: 1, background: '#fff', border: '1px solid rgba(0,0,0,0.06)', borderRadius: 10, padding: '8px 10px' }}>
+                  <div style={{ fontSize: 9, color: '#94a3b8' }}>出勤</div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#0891B2' }}>已上班</div>
                 </div>
-                <div style={{ flex: 1, background: 'rgba(15,23,55,0.75)', border: '1px solid rgba(148,163,184,0.1)', borderRadius: 10, padding: '8px 10px' }}>
-                  <div style={{ fontSize: 9, color: '#64748b' }}>待辦</div>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: '#fb923c' }}>3 項任務</div>
+                <div style={{ flex: 1, background: '#fff', border: '1px solid rgba(0,0,0,0.06)', borderRadius: 10, padding: '8px 10px' }}>
+                  <div style={{ fontSize: 9, color: '#94a3b8' }}>待辦</div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#EA580C' }}>3 項任務</div>
                 </div>
               </div>
               {/* Quick clock */}
               <div style={{ padding: '0 14px 10px' }}>
-                <div style={{ background: 'linear-gradient(135deg, rgba(251,146,60,0.15), rgba(248,113,113,0.15))', border: '1px solid rgba(251,146,60,0.25)', borderRadius: 12, padding: '12px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ background: 'linear-gradient(135deg, rgba(234,88,12,0.08), rgba(220,38,38,0.08))', border: '1px solid rgba(234,88,12,0.15)', borderRadius: 12, padding: '12px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: '#f1f5f9' }}>點我下班打卡</div>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: '#1e293b' }}>點我下班打卡</div>
                     <div style={{ fontSize: 10, color: '#94a3b8', marginTop: 2 }}>上班 08:52</div>
                   </div>
                   <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg, #fb923c, #f87171)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>👋</div>
@@ -569,29 +569,29 @@ export default function DemoLanding() {
               </div>
               {/* Menu grid */}
               <div style={{ padding: '0 14px 10px' }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: '#f1f5f9', marginBottom: 8 }}>功能選單</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#1e293b', marginBottom: 8 }}>功能選單</div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
                   {[
-                    { icon: '⏰', label: '打卡', color: 'rgba(34,211,238,0.15)' },
-                    { icon: '💰', label: '查薪水', color: 'rgba(52,211,153,0.15)' },
-                    { icon: '📋', label: '請假', color: 'rgba(59,130,246,0.15)' },
-                    { icon: '📦', label: '查庫存', color: 'rgba(251,146,60,0.15)' },
-                    { icon: '⚙️', label: '流程', color: 'rgba(167,139,250,0.15)' },
-                    { icon: '🧾', label: '報帳', color: 'rgba(251,191,36,0.15)' },
-                    { icon: '📅', label: '排休', color: 'rgba(34,211,238,0.15)' },
-                    { icon: '🤝', label: '客戶', color: 'rgba(244,114,182,0.15)' },
+                    { icon: '⏰', label: '打卡', color: 'rgba(8,145,178,0.1)' },
+                    { icon: '💰', label: '查薪水', color: 'rgba(5,150,105,0.1)' },
+                    { icon: '📋', label: '請假', color: 'rgba(37,99,235,0.1)' },
+                    { icon: '📦', label: '查庫存', color: 'rgba(234,88,12,0.1)' },
+                    { icon: '⚙️', label: '流程', color: 'rgba(124,58,237,0.1)' },
+                    { icon: '🧾', label: '報帳', color: 'rgba(217,119,6,0.1)' },
+                    { icon: '📅', label: '排休', color: 'rgba(8,145,178,0.1)' },
+                    { icon: '🤝', label: '客戶', color: 'rgba(219,39,119,0.1)' },
                   ].map(m => (
-                    <div key={m.label} style={{ background: 'rgba(15,23,55,0.75)', border: '1px solid rgba(148,163,184,0.1)', borderRadius: 10, padding: '10px 4px', textAlign: 'center' }}>
+                    <div key={m.label} style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.06)', borderRadius: 10, padding: '10px 4px', textAlign: 'center' }}>
                       <div style={{ width: 32, height: 32, borderRadius: 8, background: m.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, margin: '0 auto 4px' }}>{m.icon}</div>
-                      <div style={{ fontSize: 9, fontWeight: 600, color: '#94a3b8' }}>{m.label}</div>
+                      <div style={{ fontSize: 9, fontWeight: 600, color: '#64748b' }}>{m.label}</div>
                     </div>
                   ))}
                 </div>
               </div>
               {/* Tab bar */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', background: 'rgba(6,9,26,0.95)', borderTop: '1px solid rgba(148,163,184,0.1)', padding: '6px 0 8px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', background: '#fff', borderTop: '1px solid rgba(0,0,0,0.06)', padding: '6px 0 8px' }}>
                 {['首頁', '打卡', '請假', '庫存'].map((t, i) => (
-                  <div key={t} style={{ textAlign: 'center', fontSize: 9, color: i === 0 ? '#22d3ee' : '#64748b', fontWeight: 500 }}>{t}</div>
+                  <div key={t} style={{ textAlign: 'center', fontSize: 9, color: i === 0 ? '#0891B2' : '#94a3b8', fontWeight: 500 }}>{t}</div>
                 ))}
               </div>
             </div>
