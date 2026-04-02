@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { Bell, X, AlertTriangle, Clock, Package, Calendar } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
@@ -138,8 +139,8 @@ export default function NotificationCenter() {
         )}
       </button>
 
-      {/* Overlay + Panel */}
-      {open && (
+      {/* Overlay + Panel (portal to body to escape sidebar overflow:hidden) */}
+      {open && createPortal(
         <>
           <div
             onClick={() => setOpen(false)}
@@ -240,7 +241,8 @@ export default function NotificationCenter() {
               )}
             </div>
           </div>
-        </>
+        </>,
+        document.body
       )}
     </>
   )

@@ -155,33 +155,34 @@ export default function Sidebar() {
     <aside className="sidebar">
       <div className="sidebar-brand">
         <div className="sidebar-brand-icon">AI</div>
-        <div className="sidebar-brand-text">
+        <div className="sidebar-brand-text" style={{ flex: 1, minWidth: 0 }}>
           <h1>SME Ops</h1>
           <span>Operations System</span>
         </div>
-        <button
-          onClick={() => navigate('/demo')}
-          title="Demo 展示頁"
-          style={{
-            background: 'linear-gradient(135deg, var(--accent-cyan-dim), var(--accent-purple-dim))',
-            border: '1px solid var(--border-medium)',
-            color: 'var(--accent-cyan)',
-            cursor: 'pointer',
-            padding: '4px 10px',
-            borderRadius: 'var(--radius-full)',
-            fontSize: 11,
-            fontWeight: 700,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 4,
-            flexShrink: 0,
-            transition: 'var(--transition-fast)',
-          }}
-        >
-          <Sparkles size={12} />
-          Demo
-        </button>
-        <NotificationCenter />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+          <button
+            onClick={() => navigate('/demo')}
+            title="Demo 展示頁"
+            style={{
+              background: 'linear-gradient(135deg, var(--accent-cyan-dim), var(--accent-purple-dim))',
+              border: '1px solid var(--border-medium)',
+              color: 'var(--accent-cyan)',
+              cursor: 'pointer',
+              padding: '4px 8px',
+              borderRadius: 'var(--radius-full)',
+              fontSize: 10,
+              fontWeight: 700,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 3,
+              transition: 'var(--transition-fast)',
+            }}
+          >
+            <Sparkles size={10} />
+            Demo
+          </button>
+          <NotificationCenter />
+        </div>
       </div>
 
       <nav className="sidebar-nav">
