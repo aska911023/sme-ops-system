@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Plus, Search, ArrowRightCircle } from 'lucide-react'
-import { getQuotations, createQuotation, updateQuotation } from '../../lib/db'
+import { getQuotations, createQuotation, updateQuotation, createSalesOrder } from '../../lib/db'
 import LoadingSpinner from '../../components/LoadingSpinner'
 import Modal, { Field } from '../../components/Modal'
 
@@ -29,10 +29,28 @@ export default function Quotations() {
     }
   }
 
+  const [convertMsg, setConvertMsg] = useState('')
+
   const handleConvertToOrder = async (item) => {
-    const { data } = await updateQuotation(item.id, { status: '已成交' })
-    if (data) {
+    // 1. 建立銷售訂單
+    const orderNumber = `SO-${new Date().toISOString().slice(0, 4)}-${String(Date.now()).slice(-3)}`
+    const { data: order } = await createSalesOrder({
+      order_number: orderNumber,
+      quote_id: item.id,
+      customer: item.customer,
+      items: item.items || [],
+      subtotal: item.subtotal || item.total || 0,
+      discount: item.discount || 0,
+      tax: item.tax || 0,
+      total: item.total || 0,
+      created_by: item.created_by || '系統',
+    })
+    // 2. 更新報價單狀態
+    if (order) {
+      await updateQuotation(item.id, { status: '已成交', converted_order_id: order.id })
       setItems(prev => prev.map(i => i.id === item.id ? { ...i, status: '已成交' } : i))
+      setConvertMsg(`已建立銷售訂單 ${orderNumber}`)
+      setTimeout(() => setConvertMsg(''), 4000)
     }
   }
 
@@ -60,6 +78,11 @@ export default function Quotations() {
           </div>
           <button className="btn btn-primary" onClick={() => setShowModal(true)}><Plus size={14} /> 新增報價</button>
         </div>
+        {convertMsg && (
+          <div style={{ marginTop: 8, padding: '10px 16px', borderRadius: 10, background: 'var(--accent-green-dim)', color: 'var(--accent-green)', fontSize: 13, fontWeight: 600 }}>
+            ✅ {convertMsg}
+          </div>
+        )}
       </div>
 
       <div className="stat-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>

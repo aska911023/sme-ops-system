@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Plus, Search } from 'lucide-react'
 import { getGoodsReceipts, createGoodsReceipt } from '../../lib/db'
+import { supabase } from '../../lib/supabase'
+import { createAPFromReceipt } from '../../lib/automation'
 import LoadingSpinner from '../../components/LoadingSpinner'
 import Modal, { Field } from '../../components/Modal'
 
@@ -19,11 +21,15 @@ export default function GoodsReceipts() {
 
   const handleSubmit = async () => {
     if (!form.po_id || !form.receiver) return
-    const { data } = await createGoodsReceipt({ ...form, po_id: parseInt(form.po_id) || 0, status: '待驗收' })
+    const poId = parseInt(form.po_id) || 0
+    const { data } = await createGoodsReceipt({ ...form, po_id: poId, status: '已驗收' })
     if (data) {
       setReceipts(prev => [...prev, data])
       setShowModal(false)
       setForm({ po_id: '', receiver: '', received_date: '', notes: '' })
+      // 自動產生應付帳款
+      const { data: po } = await supabase.from('purchase_orders').select('*').eq('id', poId).maybeSingle()
+      if (po) createAPFromReceipt(data, po)
     }
   }
 

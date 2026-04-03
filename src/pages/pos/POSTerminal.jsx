@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { Search, Plus, Minus, Trash2, ShoppingCart } from 'lucide-react'
+import { supabase } from '../../lib/supabase'
+import { createPOSTransaction, createInvoice } from '../../lib/db'
 
 const MOCK_PRODUCTS = [
   { id: 1, name: '美式咖啡', price: 60, category: '飲品' },
@@ -44,11 +46,55 @@ export default function POSTerminal() {
   const tax = Math.round(subtotal * 0.05)
   const total = subtotal - discount + tax
 
-  const handleCheckout = () => {
+  const [checkoutMsg, setCheckoutMsg] = useState('')
+
+  const handleCheckout = async () => {
     if (cart.length === 0) return
-    alert(`結帳完成！\n付款方式：${paymentMethod}\n總計：NT$ ${total.toLocaleString()}`)
+    const txnNum = `POS-${String(Date.now()).slice(-6)}`
+    const invoiceNum = `EI-${new Date().toISOString().slice(2, 10).replace(/-/g, '')}-${String(Date.now()).slice(-4)}`
+
+    // 1. 建立 POS 交易紀錄
+    await createPOSTransaction({
+      transaction_number: txnNum,
+      store: '台北總部',
+      cashier: '系統',
+      items: cart.map(c => ({ name: c.name, qty: c.qty, price: c.price })),
+      subtotal, discount, tax, total,
+      payment_method: paymentMethod,
+      points_earned: Math.floor(total / 10),
+      status: '完成',
+    })
+
+    // 2. 自動開立電子發票
+    await createInvoice({
+      invoice_number: invoiceNum,
+      invoice_date: new Date().toISOString().slice(0, 10),
+      items: cart.map(c => ({ name: c.name, qty: c.qty, price: c.price })),
+      subtotal, tax, total,
+      status: '已開立',
+    })
+
+    // 3. 產生應收帳款傳票（借：現金/銀行 貸：營業收入）
+    const entryNum = `JE-POS-${String(Date.now()).slice(-4)}`
+    const { data: entry } = await supabase.from('journal_entries').insert({
+      entry_number: entryNum,
+      entry_date: new Date().toISOString().slice(0, 10),
+      description: `POS 銷售 ${txnNum}（${paymentMethod}）`,
+      source: 'POS', status: '已過帳', created_by: '系統',
+    }).select().single()
+    if (entry) {
+      const debitAccount = paymentMethod === '現金' ? '1100' : '1200'
+      const debitName = paymentMethod === '現金' ? '現金' : '銀行存款'
+      await supabase.from('journal_lines').insert([
+        { entry_id: entry.id, account_code: debitAccount, account_name: debitName, debit: total, credit: 0, memo: txnNum },
+        { entry_id: entry.id, account_code: '4100', account_name: '營業收入', debit: 0, credit: total, memo: txnNum },
+      ])
+    }
+
+    setCheckoutMsg(`結帳完成！交易 ${txnNum}｜發票 ${invoiceNum}｜${paymentMethod} NT$ ${total.toLocaleString()}`)
     setCart([])
     setDiscount(0)
+    setTimeout(() => setCheckoutMsg(''), 5000)
   }
 
   return (
@@ -60,6 +106,11 @@ export default function POSTerminal() {
             <p>銷售結帳作業</p>
           </div>
         </div>
+        {checkoutMsg && (
+          <div style={{ marginTop: 8, padding: '12px 16px', borderRadius: 10, background: 'var(--accent-green-dim)', color: 'var(--accent-green)', fontSize: 13, fontWeight: 600 }}>
+            ✅ {checkoutMsg}
+          </div>
+        )}
       </div>
 
       <div style={{ display: 'flex', gap: 20, minHeight: 520 }}>

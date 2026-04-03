@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
-import { Plus, Search, ArrowRightLeft } from 'lucide-react'
+import { Plus, Search, ArrowRightLeft, AlertTriangle } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import { checkStockAndCreatePR } from '../../lib/automation'
 import LoadingSpinner from '../../components/LoadingSpinner'
 import Modal, { Field } from '../../components/Modal'
 
@@ -83,6 +84,16 @@ export default function Inventory() {
           <div><h2><span className="header-icon">📊</span> 庫存管理</h2><p>即時庫存查詢與調整</p></div>
           <div style={{ display: 'flex', gap: 8 }}>
             <button className="btn btn-secondary" onClick={() => setShowTransferModal(true)}><ArrowRightLeft size={14} /> 庫內移倉</button>
+            <button className="btn btn-secondary" onClick={async () => {
+              const lowItems = stocks.filter(s => (s.quantity || 0) <= (s.min_qty || 10))
+              if (lowItems.length === 0) { alert('目前沒有低庫存品項'); return }
+              const result = await checkStockAndCreatePR(
+                lowItems.map(s => ({ name: s.sku_name, qty: (s.min_qty || 10) * 2, unit: s.unit, price: s.unit_cost || 0 })),
+                '系統'
+              )
+              if (result.pr) alert(`已自動建立採購建議 ${result.pr.pr_number}（${result.shortages.length} 項缺料）`)
+              else alert('庫存充足，無需採購')
+            }}><AlertTriangle size={14} /> 低庫存檢查</button>
             <button className="btn btn-primary" onClick={() => setShowAdjModal(true)}><Plus size={14} /> 庫存調整</button>
           </div>
         </div>

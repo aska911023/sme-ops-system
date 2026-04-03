@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Plus, Search } from 'lucide-react'
-import { getSalesOrders, createSalesOrder } from '../../lib/db'
+import { getSalesOrders, createSalesOrder, createShipment } from '../../lib/db'
+import { supabase } from '../../lib/supabase'
 import LoadingSpinner from '../../components/LoadingSpinner'
 import Modal, { Field } from '../../components/Modal'
 
@@ -30,6 +31,27 @@ export default function SalesOrders() {
     }
   }
 
+  const [actionMsg, setActionMsg] = useState('')
+
+  const handleShipOrder = async (order) => {
+    const shipNum = `SHP-${new Date().toISOString().slice(0, 4)}-${String(Date.now()).slice(-3)}`
+    // 建立物流單
+    await createShipment({
+      shipment_number: shipNum,
+      order_ref: order.order_number,
+      carrier: '待指定',
+      destination: order.customer,
+      recipient: order.customer,
+      items: order.items || [],
+      status: '待出貨',
+    })
+    // 更新訂單出貨狀態
+    const { data } = await supabase.from('sales_orders').update({ shipping_status: '已出貨' }).eq('id', order.id).select().single()
+    if (data) setItems(prev => prev.map(i => i.id === order.id ? data : i))
+    setActionMsg(`已建立出貨單 ${shipNum}`)
+    setTimeout(() => setActionMsg(''), 4000)
+  }
+
   if (loading) return <LoadingSpinner />
 
   const filtered = items.filter(s =>
@@ -54,6 +76,11 @@ export default function SalesOrders() {
           </div>
           <button className="btn btn-primary" onClick={() => setShowModal(true)}><Plus size={14} /> 新增訂單</button>
         </div>
+        {actionMsg && (
+          <div style={{ marginTop: 8, padding: '10px 16px', borderRadius: 10, background: 'var(--accent-green-dim)', color: 'var(--accent-green)', fontSize: 13, fontWeight: 600 }}>
+            ✅ {actionMsg}
+          </div>
+        )}
       </div>
 
       <div className="stat-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
@@ -86,7 +113,7 @@ export default function SalesOrders() {
         <div className="data-table-wrapper">
           <table className="data-table">
             <thead>
-              <tr><th>訂單編號</th><th>客戶</th><th>金額</th><th>付款狀態</th><th>出貨狀態</th><th>信用檢核</th><th>建立時間</th></tr>
+              <tr><th>訂單編號</th><th>客戶</th><th>金額</th><th>付款狀態</th><th>出貨狀態</th><th>信用檢核</th><th>建立時間</th><th>操作</th></tr>
             </thead>
             <tbody>
               {filtered.length === 0 && <tr><td colSpan={7} style={{ textAlign: 'center', color: 'var(--text-muted)' }}>尚無訂單</td></tr>}
@@ -111,6 +138,11 @@ export default function SalesOrders() {
                     </span>
                   </td>
                   <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{s.created_at ? new Date(s.created_at).toLocaleDateString() : ''}</td>
+                  <td>
+                    {s.shipping_status === '待出貨' && s.credit_check === '通過' && (
+                      <button className="btn btn-sm btn-primary" onClick={() => handleShipOrder(s)}>安排出貨</button>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>

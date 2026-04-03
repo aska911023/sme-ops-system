@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Plus, Search } from 'lucide-react'
 import { getPurchaseRequests, createPurchaseRequest } from '../../lib/db'
+import { supabase } from '../../lib/supabase'
+import { getSupervisor } from '../../lib/approval'
 import LoadingSpinner from '../../components/LoadingSpinner'
 import Modal, { Field } from '../../components/Modal'
 
@@ -24,6 +26,16 @@ export default function PurchaseRequests() {
       setRequests(prev => [...prev, data])
       setShowModal(false)
       setForm({ pr_number: '', requester: '', department: '', total_amount: '', reason: '' })
+
+      // 動態簽核：通知申請人的直屬主管
+      const supervisor = await getSupervisor(form.requester)
+      if (supervisor) {
+        await supabase.from('notifications').insert({
+          type: '採購簽核',
+          title: `${form.requester} 提交採購申請 ${form.pr_number}（NT$ ${(parseFloat(form.total_amount) || 0).toLocaleString()}），請審核`,
+          user_id: supervisor.name,
+        })
+      }
     }
   }
 
