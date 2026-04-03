@@ -221,8 +221,8 @@ export default function Schedule() {
       <div className="page-header">
         <div className="page-header-row">
           <div>
-            <h2><span className="header-icon">📅</span> 排班</h2>
-            <p>員工每週排班管理（點擊格子排班）</p>
+            <h2><span className="header-icon">📅</span> 排班管理</h2>
+            <p>管理班表、排班偏好與AI自動排班</p>
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text-secondary)' }}>
@@ -231,14 +231,52 @@ export default function Schedule() {
                 value={minStaff} onChange={e => setMinStaff(Number(e.target.value) || 1)} min={1} />
               人/天
             </div>
-            <button className="btn btn-secondary" style={{ width: 'auto', padding: '8px 16px' }} onClick={() => setShowLawModal(true)}>
-              <Shield size={14} /> 法規參照
+            <button className="btn btn-secondary" style={{ width: 'auto', padding: '8px 16px' }} onClick={async () => {
+              // Copy last week's schedule
+              const lastWeek = getWeekDates(weekOffset - 1)
+              const { data: lastSchedules } = await supabase.from('schedules').select('*').gte('date', lastWeek[0]).lte('date', lastWeek[6])
+              if (!lastSchedules?.length) { alert('上週無排班資料'); return }
+              const newSchedules = lastSchedules.map(s => {
+                const dayIdx = lastWeek.indexOf(s.date)
+                return dayIdx >= 0 ? { employee: s.employee, date: weekDates[dayIdx], shift: s.shift } : null
+              }).filter(Boolean)
+              if (newSchedules.length > 0) {
+                const { data } = await supabase.from('schedules').upsert(newSchedules, { onConflict: 'employee,date' }).select()
+                if (data) setSchedules(prev => { const map = {}; for (const s of [...prev, ...data]) map[`${s.employee}_${s.date}`] = s; return Object.values(map) })
+                alert(`已複製 ${newSchedules.length} 筆排班`)
+              }
+            }}>
+              📋 複製上週
             </button>
-            <button className="btn btn-primary" style={{ width: 'auto', padding: '8px 16px' }}
+            <button className="btn btn-secondary" style={{ width: 'auto', padding: '8px 16px' }} onClick={() => setShowLawModal(true)}>
+              <Shield size={14} /> 排班條件
+            </button>
+            <button className="btn btn-primary" style={{ width: 'auto', padding: '8px 16px', background: 'linear-gradient(135deg, var(--accent-red), var(--accent-orange))' }}
               onClick={handleAutoSchedule} disabled={autoScheduling}>
               <Sparkles size={14} /> {autoScheduling ? 'AI 排班中...' : 'AI 自動排班'}
             </button>
           </div>
+        </div>
+      </div>
+
+      {/* Store selector + Tabs */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 14 }}>📅</span>
+          <select className="form-input" style={{ width: 200, padding: '8px 12px', fontSize: 13 }}
+            value={storeFilter} onChange={e => setStoreFilter(e.target.value)}>
+            <option value="">全部門市</option>
+            {locations.map(l => <option key={l.id} value={l.name}>{l.name}</option>)}
+          </select>
+        </div>
+        <div style={{ display: 'flex', gap: 0, border: '1px solid var(--border-medium)', borderRadius: 10, overflow: 'hidden' }}>
+          {['班表總覽', '排班條件', '分析報表'].map(tab => (
+            <button key={tab} style={{
+              padding: '8px 18px', border: 'none', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+              background: tab === '班表總覽' ? 'var(--accent-cyan)' : 'var(--bg-card)',
+              color: tab === '班表總覽' ? '#fff' : 'var(--text-muted)',
+            }}>{tab}</button>
+          ))}
         </div>
       </div>
 
@@ -337,7 +375,9 @@ export default function Schedule() {
                 <tr key={emp.id}>
                   <td>
                     <div style={{ fontWeight: 600, fontSize: 13 }}>{emp.name}</div>
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{emp.dept}</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                      {emp.position || emp.dept} · {weekDates.filter(d => { const s = getShift(emp.name, d); return s && s !== '休' }).length * 8}h
+                    </div>
                   </td>
                   {weekDates.map(date => {
                     const shift = getShift(emp.name, date)
