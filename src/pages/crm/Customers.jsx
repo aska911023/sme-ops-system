@@ -3,6 +3,7 @@ import { Plus, Search, ChevronDown, ChevronRight, Phone, Mail } from 'lucide-rea
 import { supabase } from '../../lib/supabase'
 import LoadingSpinner from '../../components/LoadingSpinner'
 import Modal, { Field } from '../../components/Modal'
+import MaskedText from '../../components/MaskedText'
 
 const TAGS = ['VIP', '潛力客戶', '愛砍價', '潛在經銷商', '老客戶', '冷客戶']
 const STATUSES = ['活躍', '潛在', '冷凍', '流失']
@@ -127,8 +128,8 @@ export default function Customers() {
                   <div>
                     <div style={{ fontWeight: 700 }}>{c.name} {c.company && <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 400 }}>· {c.company}</span>}</div>
                     <div style={{ fontSize: 12, color: 'var(--text-muted)', display: 'flex', gap: 12 }}>
-                      {c.phone && <span><Phone size={11} style={{ marginRight: 3 }} />{c.phone}</span>}
-                      {c.email && <span><Mail size={11} style={{ marginRight: 3 }} />{c.email}</span>}
+                      {c.phone && <span><Phone size={11} style={{ marginRight: 3 }} /><MaskedText value={c.phone} type="phone" canReveal={true} /></span>}
+                      {c.email && <span><Mail size={11} style={{ marginRight: 3 }} /><MaskedText value={c.email} type="email" canReveal={true} /></span>}
                       {c.location_id && <span>📍 {locations.find(l => l.id === c.location_id)?.name}</span>}
                     </div>
                   </div>

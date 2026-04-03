@@ -3,6 +3,32 @@
 --  貼到 Supabase Dashboard > SQL Editor > New Query 執行
 -- ============================================================
 
+-- ============================================================
+--  RBAC (Role-Based Access Control)
+-- ============================================================
+
+create table roles (
+  id serial primary key,
+  name text unique not null,
+  description text,
+  level int default 0
+);
+
+create table permissions (
+  id serial primary key,
+  code text unique not null,
+  name text not null,
+  module text,
+  description text
+);
+
+create table role_permissions (
+  id serial primary key,
+  role_id int references roles(id) on delete cascade,
+  permission_id int references permissions(id) on delete cascade,
+  unique(role_id, permission_id)
+);
+
 -- Employees
 create table employees (
   id serial primary key,
@@ -16,6 +42,8 @@ create table employees (
   phone text,
   join_date date,
   avatar text,
+  role_id int references roles(id),
+  supervisor text,
   created_at timestamptz default now()
 );
 
@@ -247,12 +275,17 @@ create table notifications (
   created_at timestamptz default now()
 );
 
--- Audit Logs
+-- Audit Logs (enhanced with field-level change tracking)
 create table audit_logs (
   id serial primary key,
   "user" text not null,
   action text,
   target text,
+  target_table text,
+  target_id int,
+  field_name text,
+  old_value text,
+  new_value text,
   time timestamptz default now(),
   ip text
 );
@@ -451,16 +484,53 @@ create table inquiries (
 --  Seed Data（初始測試資料）
 -- ============================================================
 
-insert into employees (name, name_en, dept, position, store, status, email, phone, join_date, avatar) values
-('王小明', 'Xiaoming Wang', '研發部', '資深工程師', '台北總部', '在職', 'xiaoming@company.com', '0912-345-678', '2022-03-15', '#3b82f6'),
-('林美麗', 'Meili Lin', '行銷部', '行銷經理', '台北總部', '在職', 'meili@company.com', '0923-456-789', '2021-08-20', '#a78bfa'),
-('陳大偉', 'Dawei Chen', '業務部', '業務主管', '台中分店', '在職', 'dawei@company.com', '0934-567-890', '2020-11-10', '#f472b6'),
-('張雅婷', 'Yating Zhang', '人資部', 'HR 專員', '台北總部', '在職', 'yating@company.com', '0945-678-901', '2023-01-05', '#34d399'),
-('黃志強', 'Zhiqiang Huang', '研發部', '前端工程師', '台北總部', '在職', 'zhiqiang@company.com', '0956-789-012', '2023-06-12', '#fb923c'),
-('劉佳玲', 'Jialing Liu', '財務部', '財務主管', '台北總部', '在職', 'jialing@company.com', '0967-890-123', '2019-04-20', '#22d3ee'),
-('吳建宏', 'Jianhong Wu', '業務部', '業務代表', '高雄分店', '在職', 'jianhong@company.com', '0978-901-234', '2024-02-14', '#f87171'),
-('蔡心怡', 'Xinyi Cai', '客服部', '客服組長', '台中分店', '在職', 'xinyi@company.com', '0989-012-345', '2022-09-08', '#fbbf24'),
-('鄭宇翔', 'Yuxiang Zheng', '研發部', '後端工程師', '台北總部', '離職', 'yuxiang@company.com', '0990-123-456', '2021-12-01', '#64748b');
+-- RBAC seed data
+insert into roles (name, description, level) values
+('admin', '系統管理員 — 最高權限', 100),
+('manager', '主管 — 可審核、查看完整資料', 80),
+('team_lead', '組長 — 可審核組內、有限查看', 60),
+('employee', '一般員工 — 基本操作', 20),
+('viewer', '訪客 — 唯讀', 10);
+
+insert into permissions (code, name, module) values
+('employee.view', '查看員工資料', '人資'),
+('employee.view_full', '查看完整個資（手機/Email）', '人資'),
+('employee.edit', '編輯員工資料', '人資'),
+('leave.approve', '審核假單', '人資'),
+('salary.view', '查看薪資', '人資'),
+('salary.view_all', '查看全部員工薪資', '人資'),
+('pr.approve', '審核採購申請', '採購'),
+('po.create', '建立採購單', '採購'),
+('inventory.edit', '修改庫存數量', '倉儲'),
+('customer.view_full', '查看客戶完整資料', 'CRM'),
+('customer.edit', '編輯客戶資料', 'CRM'),
+('finance.view', '查看財務資料', '財務'),
+('finance.edit', '編輯傳票', '財務'),
+('system.admin', '系統管理', '系統'),
+('audit.view', '查看稽核日誌', '系統');
+
+insert into role_permissions (role_id, permission_id) values
+-- admin gets all
+(1,1),(1,2),(1,3),(1,4),(1,5),(1,6),(1,7),(1,8),(1,9),(1,10),(1,11),(1,12),(1,13),(1,14),(1,15),
+-- manager
+(2,1),(2,2),(2,3),(2,4),(2,5),(2,6),(2,7),(2,8),(2,9),(2,10),(2,11),(2,12),(2,13),(2,15),
+-- team_lead
+(3,1),(3,2),(3,4),(3,5),(3,9),(3,10),
+-- employee
+(4,1),(4,5),
+-- viewer
+(5,1);
+
+insert into employees (name, name_en, dept, position, store, status, email, phone, join_date, avatar, role_id, supervisor) values
+('王小明', 'Xiaoming Wang', '研發部', '資深工程師', '台北總部', '在職', 'xiaoming@company.com', '0912-345-678', '2022-03-15', '#3b82f6', 3, '劉佳玲'),
+('林美麗', 'Meili Lin', '行銷部', '行銷經理', '台北總部', '在職', 'meili@company.com', '0923-456-789', '2021-08-20', '#a78bfa', 2, '劉佳玲'),
+('陳大偉', 'Dawei Chen', '業務部', '業務主管', '台中分店', '在職', 'dawei@company.com', '0934-567-890', '2020-11-10', '#f472b6', 2, '劉佳玲'),
+('張雅婷', 'Yating Zhang', '人資部', 'HR 專員', '台北總部', '在職', 'yating@company.com', '0945-678-901', '2023-01-05', '#34d399', 4, '劉佳玲'),
+('黃志強', 'Zhiqiang Huang', '研發部', '前端工程師', '台北總部', '在職', 'zhiqiang@company.com', '0956-789-012', '2023-06-12', '#fb923c', 4, '王小明'),
+('劉佳玲', 'Jialing Liu', '財務部', '財務主管', '台北總部', '在職', 'jialing@company.com', '0967-890-123', '2019-04-20', '#22d3ee', 1, null),
+('吳建宏', 'Jianhong Wu', '業務部', '業務代表', '高雄分店', '在職', 'jianhong@company.com', '0978-901-234', '2024-02-14', '#f87171', 4, '陳大偉'),
+('蔡心怡', 'Xinyi Cai', '客服部', '客服組長', '台中分店', '在職', 'xinyi@company.com', '0989-012-345', '2022-09-08', '#fbbf24', 3, '陳大偉'),
+('鄭宇翔', 'Yuxiang Zheng', '研發部', '後端工程師', '台北總部', '離職', 'yuxiang@company.com', '0990-123-456', '2021-12-01', '#64748b', 4, '王小明');
 
 insert into attendance_records (employee, date, clock_in, clock_out, status, hours) values
 ('王小明', '2026-03-27', '08:52', '18:15', '正常', 8.38),

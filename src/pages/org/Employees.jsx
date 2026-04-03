@@ -3,6 +3,7 @@ import { Plus, Search, UserMinus, UserPlus, Pencil } from 'lucide-react'
 import { getEmployees, createEmployee, updateEmployee } from '../../lib/db'
 import { supabase } from '../../lib/supabase'
 import LoadingSpinner from '../../components/LoadingSpinner'
+import MaskedText from '../../components/MaskedText'
 import Modal, { Field } from '../../components/Modal'
 
 const AVATARS = ['#3b82f6', '#a78bfa', '#f472b6', '#34d399', '#fb923c', '#22d3ee', '#f87171', '#fbbf24']
@@ -217,8 +218,8 @@ export default function Employees() {
                   <td>{e.dept}</td>
                   <td>{e.position}</td>
                   <td>{e.store}</td>
-                  <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{e.email}</td>
-                  <td style={{ fontSize: 12 }}>{e.phone}</td>
+                  <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}><MaskedText value={e.email} type="email" canReveal={true} /></td>
+                  <td style={{ fontSize: 12 }}><MaskedText value={e.phone} type="phone" canReveal={true} /></td>
                   <td style={{ fontSize: 12 }}>
                     {e.join_date}
                     {e.resign_date && (
