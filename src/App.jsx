@@ -63,6 +63,9 @@ import FinanceOverview from './pages/finance/Overview'
 import JournalEntries from './pages/finance/JournalEntries'
 import AccountsReceivable from './pages/finance/AccountsReceivable'
 import AccountsPayable from './pages/finance/AccountsPayable'
+import BOM from './pages/manufacturing/BOM'
+import MRP from './pages/manufacturing/MRP'
+import QualityInspection from './pages/manufacturing/QualityInspection'
 
 function AdminApp() {
   const [showOnboarding, setShowOnboarding] = useState(() => !localStorage.getItem('sme_onboarded'))
@@ -140,6 +143,10 @@ function AdminApp() {
             <Route path="/finance/journal" element={<JournalEntries />} />
             <Route path="/finance/ar" element={<AccountsReceivable />} />
             <Route path="/finance/ap" element={<AccountsPayable />} />
+            {/* Manufacturing & QM */}
+            <Route path="/manufacturing/bom" element={<BOM />} />
+            <Route path="/manufacturing/mrp" element={<MRP />} />
+            <Route path="/manufacturing/qm" element={<QualityInspection />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>

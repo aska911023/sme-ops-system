@@ -70,8 +70,8 @@ const INTEGRATIONS = [
 ]
 
 const STATS = [
-  { label: '功能模組', value: 10, suffix: '' },
-  { label: '功能頁面', value: 62, suffix: '+' },
+  { label: '功能模組', value: 12, suffix: '' },
+  { label: '功能頁面', value: 70, suffix: '+' },
   { label: '跨模組整合', value: 6, suffix: '項' },
   { label: '資料表串接', value: 30, suffix: '+' },
 ]
@@ -178,7 +178,7 @@ export default function DemoLanding() {
   // Inquiry form
   const [inquiry, setInquiry] = useState({ company_name: '', contact_name: '', phone: '', email: '', company_size: '', interested_modules: [] })
   const [inquiryStatus, setInquiryStatus] = useState(null) // null | 'sending' | 'success' | 'error'
-  const MODULE_OPTIONS = ['HR 人資管理', 'CRM 客戶管理', 'WMS 倉儲管理', '採購管理', '財務會計', '流程管理', '組織管理', 'AI 工具', '全部都要']
+  const MODULE_OPTIONS = ['HR 人資管理', 'CRM 客戶管理', 'WMS 倉儲管理', '採購管理', '財務會計', '製造 & 品質', '流程管理', '組織管理', 'AI 工具', '全部都要']
 
   const toggleModule = (mod) => {
     setInquiry(prev => ({
@@ -749,6 +749,10 @@ export default function DemoLanding() {
               items: ['財務總覽（資產負債）', '傳票管理（GL 總帳）', '應收帳款 AR（逾期追蹤）', '應付帳款 AP（付款管理）'],
             },
             {
+              icon: '🔧', title: '製造 & 品質', tag: '3 項功能', color: 'var(--accent-red)',
+              items: ['BOM 物料清單（成品零件展開）', 'MRP 物料需求計畫（缺料預警）', '品質管理（進料/成品檢驗）'],
+            },
+            {
               icon: '🤖', title: 'AI 工具', tag: '2 項功能', color: 'var(--accent-pink)',
               items: ['AI 幫助中心', 'Agent 控制台'],
             },
@@ -828,9 +832,9 @@ export default function DemoLanding() {
           overflow: 'hidden', border: '1px solid var(--border-subtle)',
         }}>
           {[
-            { value: '62', label: '功能頁面' },
-            { value: '32', label: '資料表' },
-            { value: '10', label: '系統模組' },
+            { value: '70', label: '功能頁面' },
+            { value: '35', label: '資料表' },
+            { value: '12', label: '系統模組' },
             { value: '9', label: 'LINE 指令' },
             { value: '3', label: '推播類型' },
           ].map((s, i) => (

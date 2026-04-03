@@ -145,6 +145,19 @@ const navSections = [
     ]
   },
   {
+    label: '製造 & 品質',
+    items: [
+      {
+        icon: Settings, label: '製造管理', path: '/manufacturing',
+        children: [
+          { icon: ClipboardList, label: 'BOM 物料清單', path: '/manufacturing/bom' },
+          { icon: BarChart3, label: 'MRP 需求計畫', path: '/manufacturing/mrp' },
+          { icon: CheckSquare, label: '品質管理', path: '/manufacturing/qm' },
+        ]
+      }
+    ]
+  },
+  {
     label: '系統',
     items: [
       { icon: Zap, label: '觸發器', path: '/system/triggers' },

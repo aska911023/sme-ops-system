@@ -237,3 +237,17 @@ export const getAccountsPayable = () =>
   supabase.from('accounts_payable').select('*').order('id', { ascending: false })
 export const createAccountPayable = (data) =>
   supabase.from('accounts_payable').insert(data).select().single()
+
+// ── Manufacturing & QM ──
+export const getBOMs = () =>
+  supabase.from('bom').select('*').order('id')
+export const createBOM = (data) =>
+  supabase.from('bom').insert(data).select().single()
+export const getMRPResults = () =>
+  supabase.from('mrp_results').select('*').order('id', { ascending: false })
+export const createMRPResult = (data) =>
+  supabase.from('mrp_results').insert(data).select().single()
+export const getQualityInspections = () =>
+  supabase.from('quality_inspections').select('*').order('id', { ascending: false })
+export const createQualityInspection = (data) =>
+  supabase.from('quality_inspections').insert(data).select().single()

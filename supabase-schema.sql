@@ -392,6 +392,49 @@ create table accounts_payable (
   created_at timestamptz default now()
 );
 
+-- ============================================================
+--  製造 & 品質 (Manufacturing & QM)
+-- ============================================================
+
+-- BOM (Bill of Materials)
+create table bom (
+  id serial primary key,
+  product_name text not null,
+  product_code text,
+  version text default 'v1',
+  components jsonb default '[]',
+  total_cost numeric default 0,
+  status text default '使用中',
+  created_at timestamptz default now()
+);
+
+-- MRP Results (物料需求計畫)
+create table mrp_results (
+  id serial primary key,
+  product_name text,
+  bom_id int references bom(id),
+  order_qty int,
+  components jsonb default '[]',
+  shortages jsonb default '[]',
+  status text default '待處理',
+  created_at timestamptz default now()
+);
+
+-- Quality Inspections (品質檢驗)
+create table quality_inspections (
+  id serial primary key,
+  type text not null,
+  reference text,
+  reference_id int,
+  inspector text,
+  inspection_date date,
+  items jsonb default '[]',
+  pass_rate numeric default 0,
+  result text default '待檢',
+  notes text,
+  created_at timestamptz default now()
+);
+
 -- Inquiries (demo contact form)
 create table inquiries (
   id serial primary key,
@@ -616,3 +659,18 @@ insert into accounts_payable (bill_number, supplier, po_ref, amount, paid_amount
 ('BILL-2026-001', '永豐包裝材料行', 'PO-2026-001', 14700, 14700, '2026-04-17', '已付款'),
 ('BILL-2026-002', '正新五金零件', 'PO-2026-002', 1988, 0, '2026-05-30', '未付款'),
 ('BILL-2026-003', '大同鋼鐵有限公司', 'PO-2025-088', 85000, 42500, '2026-04-10', '部分付款');
+
+-- ── 製造 & 品質 seed data ──
+insert into bom (product_name, product_code, version, components, total_cost, status) values
+('智慧感測器 A1', 'PROD-001', 'v2', '[{"name":"PCB 電路板","code":"MAT-001","qty":1,"unit":"片","cost":120},{"name":"溫度感測晶片","code":"MAT-002","qty":2,"unit":"顆","cost":85},{"name":"外殼 ABS","code":"MAT-003","qty":1,"unit":"個","cost":35},{"name":"螺絲M3x10","code":"MAT-004","qty":4,"unit":"個","cost":1.5}]', 331, '使用中'),
+('智慧感測器 B2', 'PROD-002', 'v1', '[{"name":"PCB 電路板","code":"MAT-001","qty":1,"unit":"片","cost":120},{"name":"濕度感測晶片","code":"MAT-005","qty":1,"unit":"顆","cost":95},{"name":"外殼 ABS","code":"MAT-003","qty":1,"unit":"個","cost":35},{"name":"螺絲M3x10","code":"MAT-004","qty":6,"unit":"個","cost":1.5}]', 259, '使用中'),
+('控制面板 C1', 'PROD-003', 'v1', '[{"name":"LCD 顯示器","code":"MAT-006","qty":1,"unit":"片","cost":280},{"name":"微控制器","code":"MAT-007","qty":1,"unit":"顆","cost":150},{"name":"按鈕模組","code":"MAT-008","qty":4,"unit":"個","cost":12},{"name":"機殼鋁合金","code":"MAT-009","qty":1,"unit":"個","cost":180}]', 658, '使用中');
+
+insert into mrp_results (product_name, bom_id, order_qty, components, shortages, status) values
+('智慧感測器 A1', 1, 100, '[{"name":"PCB 電路板","need":100,"stock":80,"shortage":20},{"name":"溫度感測晶片","need":200,"stock":150,"shortage":50},{"name":"外殼 ABS","need":100,"stock":200,"shortage":0},{"name":"螺絲M3x10","need":400,"stock":1000,"shortage":0}]', '[{"name":"PCB 電路板","shortage":20,"suggested_po":30},{"name":"溫度感測晶片","shortage":50,"suggested_po":75}]', '有缺料'),
+('控制面板 C1', 3, 50, '[{"name":"LCD 顯示器","need":50,"stock":60,"shortage":0},{"name":"微控制器","need":50,"stock":45,"shortage":5},{"name":"按鈕模組","need":200,"stock":300,"shortage":0},{"name":"機殼鋁合金","need":50,"stock":50,"shortage":0}]', '[{"name":"微控制器","shortage":5,"suggested_po":10}]', '有缺料');
+
+insert into quality_inspections (type, reference, inspector, inspection_date, items, pass_rate, result, notes) values
+('進料檢驗', 'PO-2026-001', 'Snow', '2026-04-02', '[{"name":"A4影印紙","qty":50,"passed":48,"failed":2,"reason":"外箱破損"}]', 96, '條件通過', '2箱退回供應商'),
+('成品抽檢', 'PROD-001 Batch#12', '陳大偉', '2026-04-01', '[{"name":"智慧感測器 A1","qty":20,"passed":19,"failed":1,"reason":"溫度偏差超標"}]', 95, '通過', '不良品返工'),
+('成品抽檢', 'PROD-003 Batch#5', '吳建宏', '2026-03-28', '[{"name":"控制面板 C1","qty":10,"passed":10,"failed":0,"reason":""}]', 100, '通過', '全數合格');
