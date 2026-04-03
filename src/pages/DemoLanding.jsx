@@ -28,46 +28,64 @@ function useCounter(target, duration = 1800, start = false) {
 // ── Intro section data ──
 const 核心模組_INTRO = [
   {
-    icon: '👥', title: '人資管理', color: 'var(--accent-cyan)', dim: 'var(--accent-cyan-dim)',
-    features: ['打卡追蹤', '請假 / 加班審核', '薪資計算與獎金', '績效考核', '招募管理', '差旅費核銷'], tag: 'HR',
+    icon: '👥', title: '人事管理', color: 'var(--accent-cyan)', dim: 'var(--accent-cyan-dim)',
+    features: ['GPS + WiFi 打卡驗證', '14 種假別（符合勞基法）', '薪資計算（含扣款明細）', '智慧排班（法規即時檢核）', '績效考核與獎金', '差旅報帳'], tag: '人事',
   },
   {
-    icon: '🤝', title: 'CRM 客戶管理', color: 'var(--accent-blue)', dim: 'var(--accent-blue-dim)',
-    features: ['客戶 360° 檢視', '銷售漏斗追蹤', '行銷自動化', '客服工單', '信用額度警示', '跨分店篩選'], tag: 'CRM',
+    icon: '🤝', title: '客戶經營', color: 'var(--accent-blue)', dim: 'var(--accent-blue-dim)',
+    features: ['客戶 360° 完整檢視', '銷售漏斗追蹤', '行銷活動管理', '客服工單', '個資遮蔽保護', '贏單自動產生帳款'], tag: '客戶',
   },
   {
-    icon: '📦', title: 'WMS 倉儲管理', color: 'var(--accent-green)', dim: 'var(--accent-green-dim)',
-    features: ['進貨 / 出貨管理', '即時庫存盤點', '庫存異動紀錄', 'SKU 品項管理', '倉庫篩選', '即將到期預警'], tag: 'WMS',
+    icon: '📦', title: '倉儲物流', color: 'var(--accent-green)', dim: 'var(--accent-green-dim)',
+    features: ['進貨 / 出貨管理', '即時庫存追蹤', '異動自動寫稽核', '商品主檔管理', '出貨自動拋帳款', '低庫存自動預警'], tag: '倉儲',
+  },
+  {
+    icon: '🛒', title: '採購管理', color: 'var(--accent-yellow)', dim: 'var(--accent-yellow-dim)',
+    features: ['供應商管理與評等', '採購申請（動態簽核）', '採購單追蹤', '進貨驗收', '庫存不足自動建議', '驗收自動產生應付'], tag: '採購',
+  },
+  {
+    icon: '💰', title: '財務會計', color: 'var(--accent-cyan)', dim: 'var(--accent-cyan-dim)',
+    features: ['資產負債總覽', '傳票管理（借貸平衡）', '應收帳款追蹤', '應付帳款管理', '毛利分析', '跨模組自動拋轉'], tag: '財務',
+  },
+  {
+    icon: '🔧', title: '生產品管', color: 'var(--accent-red)', dim: 'var(--accent-red-dim)',
+    features: ['物料清單（零件展開）', '需求計畫（缺料預警）', '進料檢驗', '成品抽檢', '合格率追蹤', '品質報表'], tag: '生產',
   },
   {
     icon: '⚙️', title: '流程管理', color: 'var(--accent-purple)', dim: 'var(--accent-purple-dim)',
-    features: ['標準作業流程', '任務指派追蹤', '查核清單', '流程進度看板', '部門任務篩選', '優先度管理'], tag: 'PROCESS',
+    features: ['工作流程設計', '任務分派追蹤', '查核清單', 'SOP 範本', '部門任務篩選', '優先度管理'], tag: '流程',
   },
   {
     icon: '🏢', title: '組織管理', color: 'var(--accent-orange)', dim: 'var(--accent-orange-dim)',
-    features: ['公司 / 分店管理', '部門架構', '員工資料庫', '組織圖', 'LINE 整合', '通知範本'], tag: 'ORG',
+    features: ['多公司管理', '門市管理（GPS）', '部門架構', '員工目錄', '組織圖', 'LINE 串接'], tag: '組織',
   },
   {
-    icon: '🏆', title: '績效獎金', color: 'var(--accent-yellow)', dim: 'var(--accent-yellow-dim)',
-    features: ['業務獎金自動計算', '倉管績效評分', '跨部門合戰', 'CRM 數據連動', 'WMS 數據連動', '獎金發放紀錄'], tag: '更多亮點',
+    icon: '🔐', title: '系統管理', color: 'var(--accent-red)', dim: 'var(--accent-red-dim)',
+    features: ['RBAC 角色權限', '操作紀錄追蹤', '個資遮蔽保護', '自動觸發器', '即時通知中心', '系統效能監控'], tag: '系統',
   },
   {
-    icon: '🤖', title: 'AI 工具', color: 'var(--accent-pink)', dim: 'var(--accent-pink-dim)',
-    features: ['AI 助理問答', '流程建議', '數據分析輔助', '異常預警解讀', '自動化規則推薦', '智慧報表摘要'], tag: 'AI',
+    icon: '🤖', title: '智慧工具', color: 'var(--accent-pink)', dim: 'var(--accent-pink-dim)',
+    features: ['AI 助理中心', '智慧 Agent 控制台', '營運數據儀表板', '報表 PDF 匯出', '新手引導精靈', '勞基法合規引擎'], tag: 'AI',
   },
   {
-    icon: '🔐', title: '員工 Portal', color: '#34d399', dim: 'rgba(52,211,153,0.12)',
-    features: ['自助打卡', '我的假單', '費用申請', '差旅申報', '績效自評', '個人行事曆'], tag: 'PORTAL',
+    icon: '📱', title: 'LINE 員工服務', color: '#34d399', dim: 'rgba(52,211,153,0.12)',
+    features: ['LINE 打卡（雙重驗證）', '查薪資 / 請假 / 庫存', '出差申請', '排休月曆', '主管行動簽核', '推播通知'], tag: 'LINE',
+  },
+  {
+    icon: '👤', title: '員工自助入口', color: 'var(--accent-blue)', dim: 'var(--accent-blue-dim)',
+    features: ['個人出勤狀態', '待辦任務', '請假紀錄', '薪資查詢', '快速操作選單', '專屬簡化介面'], tag: '員工',
   },
 ]
 
 const 跨系統串接S = [
-  { from: 'CRM', to: 'WMS', desc: '出貨單自動帶入客戶信用額度警示', icon: '⚡' },
-  { from: 'WMS', to: 'CRM', desc: '客戶頁顯示最新出貨紀錄與狀態', icon: '🔗' },
-  { from: 'CRM', to: '獎金', desc: '業務獎金直接抓 CRM 成交數據', icon: '🏆' },
-  { from: 'WMS', to: '獎金', desc: '倉管績效串接出貨量與錯誤率', icon: '📊' },
-  { from: '組織', to: '全模組', desc: '員工、部門資料統一來源、全系統同步', icon: '🏢' },
-  { from: 'HR', to: '薪資', desc: '事假/遲到自動連動薪資扣款明細', icon: '💰' },
+  { from: '客戶贏單', to: '財務', desc: '商機成交後，系統自動建立應收帳款和會計傳票', icon: '⚡' },
+  { from: '出貨完成', to: '財務', desc: '倉儲出貨後，自動拋轉應收帳款，不用手動建帳', icon: '📦' },
+  { from: '庫存不足', to: '採購', desc: '庫存低於安全量，自動產生採購建議給主管審核', icon: '🛒' },
+  { from: '進貨驗收', to: '財務', desc: '採購到貨驗收完成，自動建立應付帳款和傳票', icon: '🔗' },
+  { from: '請假/遲到', to: '薪資', desc: '事假、病假扣薪自動連動到薪資明細，不用再對帳', icon: '💰' },
+  { from: '組織架構', to: '全系統', desc: '員工、部門、門市資料統一維護，所有模組自動同步', icon: '🏢' },
+  { from: '假單申請', to: 'LINE', desc: '員工請假後，直屬主管的 LINE 立刻收到簽核通知', icon: '📱' },
+  { from: '成本數據', to: '儀表板', desc: '進貨成本 + 人工成本自動算出毛利，老闆一看就懂', icon: '📊' },
 ]
 
 const STATS = [
