@@ -251,3 +251,31 @@ export const getQualityInspections = () =>
   supabase.from('quality_inspections').select('*').order('id', { ascending: false })
 export const createQualityInspection = (data) =>
   supabase.from('quality_inspections').insert(data).select().single()
+
+// ── Enterprise Features ──
+export const getSupplierContracts = () =>
+  supabase.from('supplier_contracts').select('*').order('id', { ascending: false })
+export const createSupplierContract = (data) =>
+  supabase.from('supplier_contracts').insert(data).select().single()
+export const getBudgets = () =>
+  supabase.from('budgets').select('*').order('id')
+export const createBudget = (data) =>
+  supabase.from('budgets').insert(data).select().single()
+export const updateBudget = (id, data) =>
+  supabase.from('budgets').update(data).eq('id', id).select().single()
+export const getBankTransactions = () =>
+  supabase.from('bank_transactions').select('*').order('transaction_date', { ascending: false })
+export const getManufacturingOrders = () =>
+  supabase.from('manufacturing_orders').select('*').order('id', { ascending: false })
+export const createManufacturingOrder = (data) =>
+  supabase.from('manufacturing_orders').insert(data).select().single()
+export const updateManufacturingOrder = (id, data) =>
+  supabase.from('manufacturing_orders').update(data).eq('id', id).select().single()
+export const getInventoryLots = () =>
+  supabase.from('inventory_lots').select('*').order('id', { ascending: false })
+export const getStockCounts = () =>
+  supabase.from('stock_counts').select('*').order('id', { ascending: false })
+export const createStockCount = (data) =>
+  supabase.from('stock_counts').insert(data).select().single()
+export const getInsuranceSettings = () =>
+  supabase.from('insurance_settings').select('*').order('id')

@@ -37,19 +37,19 @@ const 核心模組_INTRO = [
   },
   {
     icon: '📦', title: '倉儲物流', color: 'var(--accent-green)', dim: 'var(--accent-green-dim)',
-    features: ['進貨 / 出貨管理', '即時庫存追蹤', '異動自動寫稽核', '商品主檔管理', '出貨自動拋帳款', '低庫存自動預警'], tag: '倉儲',
+    features: ['進貨 / 出貨管理', '即時庫存追蹤', '批號與效期管理', '盤點作業', '出貨自動拋帳款', '低庫存自動預警'], tag: '倉儲',
   },
   {
     icon: '🛒', title: '採購管理', color: 'var(--accent-yellow)', dim: 'var(--accent-yellow-dim)',
-    features: ['供應商管理與評等', '採購申請（動態簽核）', '採購單追蹤', '進貨驗收', '庫存不足自動建議', '驗收自動產生應付'], tag: '採購',
+    features: ['供應商管理與評等', '採購申請（動態簽核）', '採購單追蹤', '進貨驗收', '合約管理', '庫存不足自動建議'], tag: '採購',
   },
   {
     icon: '💰', title: '財務會計', color: 'var(--accent-cyan)', dim: 'var(--accent-cyan-dim)',
-    features: ['資產負債總覽', '傳票管理（借貸平衡）', '應收帳款追蹤', '應付帳款管理', '毛利分析', '跨模組自動拋轉'], tag: '財務',
+    features: ['資產負債總覽', '傳票管理', '應收應付帳款', '預算管理', '銀行對帳', '毛利分析'], tag: '財務',
   },
   {
     icon: '🔧', title: '生產品管', color: 'var(--accent-red)', dim: 'var(--accent-red-dim)',
-    features: ['物料清單（零件展開）', '需求計畫（缺料預警）', '進料檢驗', '成品抽檢', '合格率追蹤', '品質報表'], tag: '生產',
+    features: ['物料清單（零件展開）', '需求計畫（缺料預警）', '製令管理', '品質檢驗', '合格率追蹤', '不良率分析'], tag: '生產',
   },
   {
     icon: '⚙️', title: '流程管理', color: 'var(--accent-purple)', dim: 'var(--accent-purple-dim)',
@@ -90,7 +90,7 @@ const 跨系統串接S = [
 
 const STATS = [
   { label: '功能模組', value: 12, suffix: '' },
-  { label: '功能頁面', value: 70, suffix: '+' },
+  { label: '功能頁面', value: 80, suffix: '+' },
   { label: '跨模組整合', value: 6, suffix: '項' },
   { label: '資料表串接', value: 30, suffix: '+' },
 ]
@@ -765,20 +765,20 @@ export default function DemoLanding() {
               items: ['客戶經營總覽', '客戶360°完整檢視（個資遮蔽保護）', '銷售漏斗追蹤（贏單自動產生應收帳款）', '行銷活動管理', '客服工單追蹤'],
             },
             {
-              icon: '📦', title: '倉儲物流', tag: '6 項功能', color: 'var(--accent-green)',
-              items: ['倉庫營運總覽', '商品主檔管理', '進貨入庫作業', '庫存即時追蹤（異動自動寫入稽核日誌）', '出貨管理（出貨自動拋轉應收帳款）', '異常報表與分析'],
+              icon: '📦', title: '倉儲物流', tag: '8 項功能', color: 'var(--accent-green)',
+              items: ['倉庫營運總覽', '商品主檔管理', '進貨入庫作業', '庫存即時追蹤（異動自動寫入稽核日誌）', '出貨管理（出貨自動拋轉應收帳款）', '異常報表與分析', '批號追蹤（效期管理/過期預警）', '盤點作業（差異管理/盤盈盤虧）'],
             },
             {
-              icon: '🛒', title: '採購管理', tag: '4 項功能', color: 'var(--accent-yellow)',
-              items: ['供應商管理（評等與付款條件）', '採購申請（主管動態簽核）', '採購單追蹤（庫存不足自動建議）', '進貨驗收（驗收完自動產生應付帳款）'],
+              icon: '🛒', title: '採購管理', tag: '5 項功能', color: 'var(--accent-yellow)',
+              items: ['供應商管理（評等與付款條件）', '採購申請（主管動態簽核）', '採購單追蹤（庫存不足自動建議）', '進貨驗收（驗收完自動產生應付帳款）', '合約管理（折扣/最低訂量/效期）'],
             },
             {
-              icon: '💰', title: '財務會計', tag: '4 項功能', color: 'var(--accent-cyan)',
-              items: ['財務總覽（資產負債 + 毛利分析）', '傳票管理（借貸自動平衡）', '應收帳款（帳齡分析 + 逾期追蹤）', '應付帳款（付款排程管理）'],
+              icon: '💰', title: '財務會計', tag: '6 項功能', color: 'var(--accent-cyan)',
+              items: ['財務總覽（資產負債 + 毛利分析）', '傳票管理（借貸自動平衡）', '應收帳款（帳齡分析 + 逾期追蹤）', '應付帳款（付款排程管理）', '預算管理（編列/執行率/剩餘追蹤）', '銀行對帳（交易比對/差異管理）'],
             },
             {
-              icon: '🔧', title: '生產品管', tag: '3 項功能', color: 'var(--accent-red)',
-              items: ['物料清單（成品展開零件組成）', '物料需求計畫（根據訂單自動算缺料）', '品質管理（進料檢驗 / 成品抽檢 / 合格率追蹤）'],
+              icon: '🔧', title: '生產品管', tag: '4 項功能', color: 'var(--accent-red)',
+              items: ['物料清單（成品展開零件組成）', '物料需求計畫（根據訂單自動算缺料）', '品質管理（進料檢驗 / 成品抽檢 / 合格率追蹤）', '製令管理（生產工單/進度/不良率）'],
             },
             {
               icon: '⚙️', title: '流程管理', tag: '5 項功能', color: 'var(--accent-purple)',
@@ -876,8 +876,8 @@ export default function DemoLanding() {
           overflow: 'hidden', border: '1px solid var(--border-subtle)',
         }}>
           {[
-            { value: '70+', label: '功能頁面' },
-            { value: '35+', label: '資料表' },
+            { value: '80+', label: '功能頁面' },
+            { value: '42+', label: '資料表' },
             { value: '12', label: '大模組' },
             { value: '14', label: '法定假別' },
             { value: '50+', label: '法規條文' },

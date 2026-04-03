@@ -468,6 +468,109 @@ create table quality_inspections (
   created_at timestamptz default now()
 );
 
+-- ============================================================
+--  進階功能增強 (Enterprise Features)
+-- ============================================================
+
+-- 供應商合約管理
+create table supplier_contracts (
+  id serial primary key,
+  supplier_id int references suppliers(id),
+  contract_number text,
+  start_date date,
+  end_date date,
+  terms text,
+  min_order numeric default 0,
+  discount_rate numeric default 0,
+  status text default '有效',
+  created_at timestamptz default now()
+);
+
+-- 預算管理
+create table budgets (
+  id serial primary key,
+  department text,
+  category text,
+  period text,
+  budget_amount numeric default 0,
+  spent_amount numeric default 0,
+  remaining numeric default 0,
+  status text default '使用中',
+  created_at timestamptz default now()
+);
+
+-- 銀行對帳
+create table bank_transactions (
+  id serial primary key,
+  bank_account text,
+  transaction_date date,
+  description text,
+  debit numeric default 0,
+  credit numeric default 0,
+  balance numeric default 0,
+  matched boolean default false,
+  matched_entry_id int,
+  created_at timestamptz default now()
+);
+
+-- 製令管理 (Manufacturing Orders)
+create table manufacturing_orders (
+  id serial primary key,
+  mo_number text unique,
+  product_name text,
+  bom_id int references bom(id),
+  quantity int,
+  start_date date,
+  due_date date,
+  completed_qty int default 0,
+  defect_qty int default 0,
+  status text default '待生產',
+  priority text default '中',
+  assigned_to text,
+  notes text,
+  created_at timestamptz default now()
+);
+
+-- 庫存批號追蹤
+create table inventory_lots (
+  id serial primary key,
+  sku_id int,
+  lot_number text,
+  expiry_date date,
+  quantity int default 0,
+  warehouse text,
+  location_code text,
+  status text default '正常',
+  received_date date,
+  created_at timestamptz default now()
+);
+
+-- 庫存盤點作業
+create table stock_counts (
+  id serial primary key,
+  count_date date,
+  warehouse text,
+  counter text,
+  items jsonb default '[]',
+  total_items int default 0,
+  discrepancies int default 0,
+  status text default '盤點中',
+  notes text,
+  created_at timestamptz default now()
+);
+
+-- 勞健保設定
+create table insurance_settings (
+  id serial primary key,
+  employee text,
+  labor_insurance numeric default 0,
+  health_insurance numeric default 0,
+  pension_rate numeric default 6,
+  insured_salary numeric default 0,
+  effective_date date,
+  created_at timestamptz default now()
+);
+
 -- Inquiries (demo contact form)
 create table inquiries (
   id serial primary key,

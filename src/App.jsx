@@ -66,6 +66,12 @@ import AccountsPayable from './pages/finance/AccountsPayable'
 import BOM from './pages/manufacturing/BOM'
 import MRP from './pages/manufacturing/MRP'
 import QualityInspection from './pages/manufacturing/QualityInspection'
+import Contracts from './pages/purchase/Contracts'
+import Budgets from './pages/finance/Budgets'
+import BankReconciliation from './pages/finance/BankReconciliation'
+import ManufacturingOrders from './pages/manufacturing/ManufacturingOrders'
+import Lots from './pages/wms/Lots'
+import StockCount from './pages/wms/StockCount'
 
 function AdminApp() {
   const [showOnboarding, setShowOnboarding] = useState(() => !localStorage.getItem('sme_onboarded'))
@@ -133,20 +139,26 @@ function AdminApp() {
             <Route path="/wms/inventory" element={<Inventory />} />
             <Route path="/wms/outbound" element={<Outbound />} />
             <Route path="/wms/reports" element={<WMSReports />} />
+            <Route path="/wms/lots" element={<Lots />} />
+            <Route path="/wms/stock-count" element={<StockCount />} />
             {/* Purchase */}
             <Route path="/purchase/suppliers" element={<Suppliers />} />
             <Route path="/purchase/requests" element={<PurchaseRequests />} />
             <Route path="/purchase/orders" element={<PurchaseOrders />} />
             <Route path="/purchase/receipts" element={<GoodsReceipts />} />
+            <Route path="/purchase/contracts" element={<Contracts />} />
             {/* Finance */}
             <Route path="/finance/overview" element={<FinanceOverview />} />
             <Route path="/finance/journal" element={<JournalEntries />} />
             <Route path="/finance/ar" element={<AccountsReceivable />} />
             <Route path="/finance/ap" element={<AccountsPayable />} />
+            <Route path="/finance/budgets" element={<Budgets />} />
+            <Route path="/finance/bank" element={<BankReconciliation />} />
             {/* Manufacturing & QM */}
             <Route path="/manufacturing/bom" element={<BOM />} />
             <Route path="/manufacturing/mrp" element={<MRP />} />
             <Route path="/manufacturing/qm" element={<QualityInspection />} />
+            <Route path="/manufacturing/orders" element={<ManufacturingOrders />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>

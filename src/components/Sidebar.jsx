@@ -112,6 +112,8 @@ const navSections = [
           { icon: BarChart3, label: '庫存管理', path: '/wms/inventory' },
           { icon: Truck, label: '出貨管理', path: '/wms/outbound' },
           { icon: BarChart2, label: '異常與報表', path: '/wms/reports' },
+          { icon: Package, label: '批號追蹤', path: '/wms/lots' },
+          { icon: CheckSquare, label: '盤點作業', path: '/wms/stock-count' },
         ]
       }
     ]
@@ -126,6 +128,7 @@ const navSections = [
           { icon: ClipboardList, label: '採購申請', path: '/purchase/requests' },
           { icon: FileText, label: '採購單', path: '/purchase/orders' },
           { icon: FileCheck, label: '進貨驗收', path: '/purchase/receipts' },
+          { icon: FileText, label: '合約管理', path: '/purchase/contracts' },
         ]
       }
     ]
@@ -140,6 +143,8 @@ const navSections = [
           { icon: BookText, label: '傳票管理', path: '/finance/journal' },
           { icon: TrendingUp, label: '應收帳款', path: '/finance/ar' },
           { icon: Receipt, label: '應付帳款', path: '/finance/ap' },
+          { icon: BarChart3, label: '預算管理', path: '/finance/budgets' },
+          { icon: CreditCard, label: '銀行對帳', path: '/finance/bank' },
         ]
       }
     ]
@@ -153,6 +158,7 @@ const navSections = [
           { icon: ClipboardList, label: 'BOM 物料清單', path: '/manufacturing/bom' },
           { icon: BarChart3, label: 'MRP 需求計畫', path: '/manufacturing/mrp' },
           { icon: CheckSquare, label: '品質管理', path: '/manufacturing/qm' },
+          { icon: ClipboardList, label: '製令管理', path: '/manufacturing/orders' },
         ]
       }
     ]
