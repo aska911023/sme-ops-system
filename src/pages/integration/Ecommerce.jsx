@@ -89,7 +89,7 @@ export default function Ecommerce() {
                 background: 'var(--bg-secondary)',
                 borderRadius: 12,
                 padding: 20,
-                border: '1px solid var(--border-color)',
+                border: '1px solid var(--border-subtle)',
                 textAlign: 'center',
               }}>
                 <div style={{
