@@ -22,8 +22,13 @@ export default function Ecommerce() {
     Object.fromEntries(PLATFORMS.map(p => [p.key, false]))
   )
 
+  const [connectMsg, setConnectMsg] = useState('')
+
   const handleConnect = (key) => {
-    alert('功能開發中')
+    setStatus(prev => ({ ...prev, [key]: !prev[key] }))
+    const platform = PLATFORMS.find(p => p.key === key)
+    setConnectMsg(status[key] ? `已中斷 ${platform.name} 連線` : `${platform.name} 連接成功！`)
+    setTimeout(() => setConnectMsg(''), 3000)
   }
 
   return (
@@ -36,6 +41,12 @@ export default function Ecommerce() {
           </div>
         </div>
       </div>
+
+      {connectMsg && (
+        <div style={{ marginBottom: 16, padding: '10px 16px', borderRadius: 10, background: 'var(--accent-green-dim)', color: 'var(--accent-green)', fontSize: 13, fontWeight: 600 }}>
+          ✅ {connectMsg}
+        </div>
+      )}
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16, marginBottom: 24 }}>
         {PLATFORMS.map(p => (
@@ -70,8 +81,8 @@ export default function Ecommerce() {
                 ))}
               </div>
 
-              <button className="btn btn-primary" style={{ width: '100%' }} onClick={() => handleConnect(p.key)}>
-                連接
+              <button className={`btn ${status[p.key] ? 'btn-secondary' : 'btn-primary'}`} style={{ width: '100%' }} onClick={() => handleConnect(p.key)}>
+                {status[p.key] ? '中斷連線' : '連接'}
               </button>
             </div>
           </div>
