@@ -77,7 +77,8 @@ export default function Schedule() {
     if (schedules.length > 0) {
       setCompliance(validateSchedule(schedules, weekDates))
     }
-  }, [schedules, weekDates])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [schedules, weekStart])
 
   const getShift = (empName, date) => {
     const s = schedules.find(s => s.employee === empName && s.date === date)
