@@ -326,6 +326,7 @@ export default function Leave() {
                 )}
                 {t.settlement && <div style={{ fontSize: 11, color: 'var(--accent-orange)', marginTop: 4 }}>⚠ {t.settlement}</div>}
                 {t.note && <div style={{ fontSize: 11, color: 'var(--accent-cyan)', marginTop: 4 }}>💡 {t.note}</div>}
+                {t.note2026 && <div style={{ fontSize: 11, color: 'var(--accent-orange)', marginTop: 4, padding: '6px 10px', borderRadius: 6, background: 'var(--accent-orange-dim)' }}>🆕 {t.note2026}</div>}
               </div>
             ))}
           </div>
