@@ -199,3 +199,41 @@ export const createAuditLog = (data) =>
 
 export const getKpiData = () =>
   supabase.from('kpi_data').select('*').order('id')
+
+// ── Purchase Management ──
+export const getSuppliers = () =>
+  supabase.from('suppliers').select('*').order('id')
+export const createSupplier = (data) =>
+  supabase.from('suppliers').insert(data).select().single()
+export const getPurchaseRequests = () =>
+  supabase.from('purchase_requests').select('*').order('id', { ascending: false })
+export const createPurchaseRequest = (data) =>
+  supabase.from('purchase_requests').insert(data).select().single()
+export const getPurchaseOrders = () =>
+  supabase.from('purchase_orders').select('*').order('id', { ascending: false })
+export const createPurchaseOrder = (data) =>
+  supabase.from('purchase_orders').insert(data).select().single()
+export const getGoodsReceipts = () =>
+  supabase.from('goods_receipts').select('*').order('id', { ascending: false })
+export const createGoodsReceipt = (data) =>
+  supabase.from('goods_receipts').insert(data).select().single()
+
+// ── Finance & Accounting ──
+export const getAccounts = () =>
+  supabase.from('accounts').select('*').order('code')
+export const getJournalEntries = () =>
+  supabase.from('journal_entries').select('*').order('id', { ascending: false })
+export const getJournalLines = (entryId) =>
+  supabase.from('journal_lines').select('*').eq('entry_id', entryId).order('id')
+export const createJournalEntry = (data) =>
+  supabase.from('journal_entries').insert(data).select().single()
+export const createJournalLine = (data) =>
+  supabase.from('journal_lines').insert(data).select().single()
+export const getAccountsReceivable = () =>
+  supabase.from('accounts_receivable').select('*').order('id', { ascending: false })
+export const createAccountReceivable = (data) =>
+  supabase.from('accounts_receivable').insert(data).select().single()
+export const getAccountsPayable = () =>
+  supabase.from('accounts_payable').select('*').order('id', { ascending: false })
+export const createAccountPayable = (data) =>
+  supabase.from('accounts_payable').insert(data).select().single()

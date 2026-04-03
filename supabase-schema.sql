@@ -267,6 +267,131 @@ create table kpi_data (
   trend text default 'stable'
 );
 
+-- ============================================================
+--  採購管理 (Purchase Management)
+-- ============================================================
+
+-- Suppliers
+create table suppliers (
+  id serial primary key,
+  name text not null,
+  contact_person text,
+  phone text,
+  email text,
+  address text,
+  payment_terms text default 'NET30',
+  rating int default 3,
+  status text default '合作中',
+  created_at timestamptz default now()
+);
+
+-- Purchase Requests (PR)
+create table purchase_requests (
+  id serial primary key,
+  pr_number text unique,
+  requester text,
+  department text,
+  items jsonb default '[]',
+  total_amount numeric default 0,
+  reason text,
+  status text default '待審核',
+  approved_by text,
+  created_at timestamptz default now()
+);
+
+-- Purchase Orders (PO)
+create table purchase_orders (
+  id serial primary key,
+  po_number text unique,
+  supplier text,
+  pr_id int references purchase_requests(id),
+  items jsonb default '[]',
+  total_amount numeric default 0,
+  tax numeric default 0,
+  shipping numeric default 0,
+  payment_terms text,
+  expected_date date,
+  status text default '待確認',
+  created_at timestamptz default now()
+);
+
+-- Goods Receipts (驗收)
+create table goods_receipts (
+  id serial primary key,
+  po_id int references purchase_orders(id),
+  receiver text,
+  received_date date,
+  items jsonb default '[]',
+  notes text,
+  status text default '待驗收',
+  created_at timestamptz default now()
+);
+
+-- ============================================================
+--  財務會計 (Finance & Accounting)
+-- ============================================================
+
+-- Chart of Accounts (會計科目)
+create table accounts (
+  id serial primary key,
+  code text unique not null,
+  name text not null,
+  type text not null,
+  parent_code text,
+  balance numeric default 0,
+  description text
+);
+
+-- Journal Entries (傳票)
+create table journal_entries (
+  id serial primary key,
+  entry_number text unique,
+  entry_date date not null,
+  description text,
+  source text,
+  source_id int,
+  status text default '草稿',
+  created_by text,
+  created_at timestamptz default now()
+);
+
+-- Journal Lines (傳票明細)
+create table journal_lines (
+  id serial primary key,
+  entry_id int references journal_entries(id) on delete cascade,
+  account_code text,
+  account_name text,
+  debit numeric default 0,
+  credit numeric default 0,
+  memo text
+);
+
+-- Accounts Receivable (應收帳款)
+create table accounts_receivable (
+  id serial primary key,
+  invoice_number text unique,
+  customer text,
+  order_ref text,
+  amount numeric not null,
+  paid_amount numeric default 0,
+  due_date date,
+  status text default '未收款',
+  created_at timestamptz default now()
+);
+
+-- Accounts Payable (應付帳款)
+create table accounts_payable (
+  id serial primary key,
+  bill_number text unique,
+  supplier text,
+  po_ref text,
+  amount numeric not null,
+  paid_amount numeric default 0,
+  due_date date,
+  status text default '未付款',
+  created_at timestamptz default now()
+);
+
 -- Inquiries (demo contact form)
 create table inquiries (
   id serial primary key,
@@ -435,3 +560,59 @@ insert into kpi_data (metric, value, target, unit, trend) values
 ('專案交付率', 85, 95, '%', 'down'),
 ('品質合格率', 97, 98, '%', 'up'),
 ('培訓完成率', 72, 80, '%', 'up');
+
+-- ── 採購管理 seed data ──
+insert into suppliers (name, contact_person, phone, email, payment_terms, rating, status) values
+('大同鋼鐵有限公司', '李文彬', '02-8765-4321', 'lee@datong.com', 'NET30', 5, '合作中'),
+('永豐包裝材料行', '陳雅琪', '04-2233-4455', 'chen@yongfeng.com', 'NET15', 4, '合作中'),
+('正新五金零件', '黃建華', '07-3344-5566', 'huang@zhengxin.com', 'NET45', 3, '合作中'),
+('台灣物流倉儲', '張美玲', '02-5566-7788', 'chang@twlogistics.com', 'COD', 4, '暫停');
+
+insert into purchase_requests (pr_number, requester, department, items, total_amount, reason, status, approved_by) values
+('PR-2026-001', 'Snow', '業務部', '[{"name":"A4影印紙","qty":50,"unit":"箱","price":280}]', 14000, '門市用紙不足', '已核准', '劉佳玲'),
+('PR-2026-002', '陳大偉', '研發部', '[{"name":"螺絲M8x30","qty":500,"unit":"個","price":2},{"name":"螺帽M8","qty":500,"unit":"個","price":1.5}]', 1750, '產線補料', '待審核', null),
+('PR-2026-003', '蔡心怡', '行銷部', '[{"name":"名片印刷","qty":1000,"unit":"張","price":1.2}]', 1200, '業務名片用完', '已核准', '劉佳玲');
+
+insert into purchase_orders (po_number, supplier, pr_id, items, total_amount, tax, shipping, payment_terms, expected_date, status) values
+('PO-2026-001', '永豐包裝材料行', 1, '[{"name":"A4影印紙","qty":50,"unit":"箱","price":280}]', 14000, 700, 0, 'NET15', '2026-04-10', '已到貨'),
+('PO-2026-002', '正新五金零件', 2, '[{"name":"螺絲M8x30","qty":500,"unit":"個","price":2},{"name":"螺帽M8","qty":500,"unit":"個","price":1.5}]', 1750, 88, 150, 'NET45', '2026-04-15', '待出貨');
+
+insert into goods_receipts (po_id, receiver, received_date, items, notes, status) values
+(1, 'Snow', '2026-04-02', '[{"name":"A4影印紙","qty":50,"accepted":48,"rejected":2}]', '2箱外箱破損退回', '已驗收');
+
+-- ── 財務會計 seed data ──
+insert into accounts (code, name, type, parent_code, balance) values
+('1100', '現金', '資產', null, 500000),
+('1200', '銀行存款', '資產', null, 3200000),
+('1300', '應收帳款', '資產', null, 850000),
+('2100', '應付帳款', '負債', null, 420000),
+('2200', '應付薪資', '負債', null, 380000),
+('3100', '業主權益', '權益', null, 2000000),
+('4100', '營業收入', '收入', null, 1580000),
+('5100', '營業成本', '費用', null, 620000),
+('5200', '薪資費用', '費用', null, 380000),
+('5300', '租金費用', '費用', null, 120000);
+
+insert into journal_entries (entry_number, entry_date, description, source, status, created_by) values
+('JE-2026-001', '2026-04-01', '4月份薪資提列', '薪資', '已過帳', '劉佳玲'),
+('JE-2026-002', '2026-04-02', '採購單 PO-2026-001 入帳', '採購', '已過帳', '張雅婷'),
+('JE-2026-003', '2026-04-02', '客戶貨款收款', '收款', '草稿', '蔡心怡');
+
+insert into journal_lines (entry_id, account_code, account_name, debit, credit, memo) values
+(1, '5200', '薪資費用', 380000, 0, '4月份全公司薪資'),
+(1, '2200', '應付薪資', 0, 380000, '4月份全公司薪資'),
+(2, '5100', '營業成本', 14700, 0, 'A4影印紙 50箱含稅'),
+(2, '2100', '應付帳款', 0, 14700, '永豐包裝材料行'),
+(3, '1200', '銀行存款', 150000, 0, '客戶匯款'),
+(3, '1300', '應收帳款', 0, 150000, '沖銷應收');
+
+insert into accounts_receivable (invoice_number, customer, order_ref, amount, paid_amount, due_date, status) values
+('INV-2026-001', '台積電', 'SO-001', 350000, 350000, '2026-03-31', '已收款'),
+('INV-2026-002', '鴻海精密', 'SO-002', 280000, 150000, '2026-04-15', '部分收款'),
+('INV-2026-003', '聯發科', 'SO-003', 220000, 0, '2026-04-30', '未收款'),
+('INV-2026-004', '台達電', 'SO-004', 180000, 0, '2026-05-15', '未收款');
+
+insert into accounts_payable (bill_number, supplier, po_ref, amount, paid_amount, due_date, status) values
+('BILL-2026-001', '永豐包裝材料行', 'PO-2026-001', 14700, 14700, '2026-04-17', '已付款'),
+('BILL-2026-002', '正新五金零件', 'PO-2026-002', 1988, 0, '2026-05-30', '未付款'),
+('BILL-2026-003', '大同鋼鐵有限公司', 'PO-2025-088', 85000, 42500, '2026-04-10', '部分付款');

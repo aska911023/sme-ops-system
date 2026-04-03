@@ -9,7 +9,8 @@ import {
   UserCircle, MessageCircle, FileText, Zap, Bell, UserCog,
   ScrollText, Settings, BookOpen, Bot, Award, LogOut, Sun, Moon,
   Warehouse, PackageOpen, Truck, BarChart2, Package,
-  Handshake, TrendingUp, Megaphone, HeadphonesIcon, Sparkles
+  Handshake, TrendingUp, Megaphone, HeadphonesIcon, Sparkles,
+  ShoppingCart, CreditCard, BookText, FileCheck
 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import NotificationCenter from './NotificationCenter'
@@ -111,6 +112,34 @@ const navSections = [
           { icon: BarChart3, label: '庫存管理', path: '/wms/inventory' },
           { icon: Truck, label: '出貨管理', path: '/wms/outbound' },
           { icon: BarChart2, label: '異常與報表', path: '/wms/reports' },
+        ]
+      }
+    ]
+  },
+  {
+    label: '採購管理',
+    items: [
+      {
+        icon: ShoppingCart, label: '採購管理', path: '/purchase',
+        children: [
+          { icon: Users, label: '供應商', path: '/purchase/suppliers' },
+          { icon: ClipboardList, label: '採購申請', path: '/purchase/requests' },
+          { icon: FileText, label: '採購單', path: '/purchase/orders' },
+          { icon: FileCheck, label: '進貨驗收', path: '/purchase/receipts' },
+        ]
+      }
+    ]
+  },
+  {
+    label: '財務會計',
+    items: [
+      {
+        icon: CreditCard, label: '財務會計', path: '/finance',
+        children: [
+          { icon: Eye, label: '財務總覽', path: '/finance/overview' },
+          { icon: BookText, label: '傳票管理', path: '/finance/journal' },
+          { icon: TrendingUp, label: '應收帳款', path: '/finance/ar' },
+          { icon: Receipt, label: '應付帳款', path: '/finance/ap' },
         ]
       }
     ]

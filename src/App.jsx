@@ -55,6 +55,14 @@ import Outbound from './pages/wms/Outbound'
 import WMSReports from './pages/wms/Reports'
 import PortalLayout from './pages/portal/PortalLayout'
 import PortalHome from './pages/portal/PortalHome'
+import Suppliers from './pages/purchase/Suppliers'
+import PurchaseRequests from './pages/purchase/PurchaseRequests'
+import PurchaseOrders from './pages/purchase/PurchaseOrders'
+import GoodsReceipts from './pages/purchase/GoodsReceipts'
+import FinanceOverview from './pages/finance/Overview'
+import JournalEntries from './pages/finance/JournalEntries'
+import AccountsReceivable from './pages/finance/AccountsReceivable'
+import AccountsPayable from './pages/finance/AccountsPayable'
 
 function AdminApp() {
   const [showOnboarding, setShowOnboarding] = useState(() => !localStorage.getItem('sme_onboarded'))
@@ -122,6 +130,16 @@ function AdminApp() {
             <Route path="/wms/inventory" element={<Inventory />} />
             <Route path="/wms/outbound" element={<Outbound />} />
             <Route path="/wms/reports" element={<WMSReports />} />
+            {/* Purchase */}
+            <Route path="/purchase/suppliers" element={<Suppliers />} />
+            <Route path="/purchase/requests" element={<PurchaseRequests />} />
+            <Route path="/purchase/orders" element={<PurchaseOrders />} />
+            <Route path="/purchase/receipts" element={<GoodsReceipts />} />
+            {/* Finance */}
+            <Route path="/finance/overview" element={<FinanceOverview />} />
+            <Route path="/finance/journal" element={<JournalEntries />} />
+            <Route path="/finance/ar" element={<AccountsReceivable />} />
+            <Route path="/finance/ap" element={<AccountsPayable />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>

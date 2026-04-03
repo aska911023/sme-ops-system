@@ -70,8 +70,8 @@ const INTEGRATIONS = [
 ]
 
 const STATS = [
-  { label: '功能模組', value: 8, suffix: '' },
-  { label: '功能頁面', value: 50, suffix: '+' },
+  { label: '功能模組', value: 10, suffix: '' },
+  { label: '功能頁面', value: 62, suffix: '+' },
   { label: '跨模組整合', value: 6, suffix: '項' },
   { label: '資料表串接', value: 30, suffix: '+' },
 ]
@@ -178,7 +178,7 @@ export default function DemoLanding() {
   // Inquiry form
   const [inquiry, setInquiry] = useState({ company_name: '', contact_name: '', phone: '', email: '', company_size: '', interested_modules: [] })
   const [inquiryStatus, setInquiryStatus] = useState(null) // null | 'sending' | 'success' | 'error'
-  const MODULE_OPTIONS = ['HR 人資管理', 'CRM 客戶管理', 'WMS 倉儲管理', '流程管理', '組織管理', 'AI 工具', '全部都要']
+  const MODULE_OPTIONS = ['HR 人資管理', 'CRM 客戶管理', 'WMS 倉儲管理', '採購管理', '財務會計', '流程管理', '組織管理', 'AI 工具', '全部都要']
 
   const toggleModule = (mod) => {
     setInquiry(prev => ({
@@ -741,6 +741,14 @@ export default function DemoLanding() {
               items: ['自動觸發器', '通知管理', '使用者權限', '操作紀錄時間軸', '系統效能監控', '全域設定'],
             },
             {
+              icon: '🛒', title: '採購管理', tag: '4 項功能', color: 'var(--accent-yellow)',
+              items: ['供應商管理（評等）', '採購申請 PR（審核流程）', '採購單 PO（追蹤）', '進貨驗收（與 WMS 串接）'],
+            },
+            {
+              icon: '💰', title: '財務會計', tag: '4 項功能', color: 'var(--accent-cyan)',
+              items: ['財務總覽（資產負債）', '傳票管理（GL 總帳）', '應收帳款 AR（逾期追蹤）', '應付帳款 AP（付款管理）'],
+            },
+            {
               icon: '🤖', title: 'AI 工具', tag: '2 項功能', color: 'var(--accent-pink)',
               items: ['AI 幫助中心', 'Agent 控制台'],
             },
@@ -820,9 +828,9 @@ export default function DemoLanding() {
           overflow: 'hidden', border: '1px solid var(--border-subtle)',
         }}>
           {[
-            { value: '54', label: '功能頁面' },
-            { value: '23', label: '資料表' },
-            { value: '8', label: '系統模組' },
+            { value: '62', label: '功能頁面' },
+            { value: '32', label: '資料表' },
+            { value: '10', label: '系統模組' },
             { value: '9', label: 'LINE 指令' },
             { value: '3', label: '推播類型' },
           ].map((s, i) => (
