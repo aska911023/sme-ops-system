@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Users, CheckCircle, AlertTriangle, TrendingUp, Target } from 'lucide-react'
+import { Users, CheckCircle, AlertTriangle, TrendingUp, Target, ArrowUpRight, ArrowDownRight, Clock, Briefcase, CalendarCheck } from 'lucide-react'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, PointElement, LineElement, Filler } from 'chart.js'
 import { Doughnut, Bar, Line } from 'react-chartjs-2'
 import { getEmployees, getTasks, getWorkflows, getAttendance, getLeaveRequests } from '../lib/db'
@@ -7,38 +7,59 @@ import LoadingSpinner from '../components/LoadingSpinner'
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, PointElement, LineElement, Filler)
 
-// Chart theme helper
-const chartColors = {
-  cyan: '#22d3ee',
-  blue: '#3b82f6',
-  purple: '#a78bfa',
-  green: '#34d399',
-  orange: '#fb923c',
-  red: '#f87171',
-  pink: '#f472b6',
-  yellow: '#fbbf24',
-}
+const C = { cyan: '#22d3ee', blue: '#3b82f6', purple: '#a78bfa', green: '#34d399', orange: '#fb923c', red: '#f87171', pink: '#f472b6', yellow: '#fbbf24' }
 
-const chartDefaults = {
-  responsive: true,
-  maintainAspectRatio: false,
+const chartOpts = {
+  responsive: true, maintainAspectRatio: false,
   plugins: {
-    legend: {
-      labels: { color: '#94a3b8', font: { size: 11, weight: 600 }, padding: 16, usePointStyle: true, pointStyleWidth: 8 },
-    },
-    tooltip: {
-      backgroundColor: 'rgba(15, 23, 55, 0.95)',
-      titleColor: '#f1f5f9',
-      bodyColor: '#94a3b8',
-      borderColor: 'rgba(148, 163, 184, 0.15)',
-      borderWidth: 1,
-      padding: 12,
-      cornerRadius: 10,
-      titleFont: { size: 13, weight: 700 },
-      bodyFont: { size: 12 },
-    },
+    legend: { labels: { color: '#94a3b8', font: { size: 11, weight: 600 }, padding: 14, usePointStyle: true, pointStyleWidth: 8 } },
+    tooltip: { backgroundColor: 'rgba(15,23,55,0.95)', titleColor: '#f1f5f9', bodyColor: '#94a3b8', borderColor: 'rgba(148,163,184,0.12)', borderWidth: 1, padding: 12, cornerRadius: 10 },
   },
 }
+const grid = { color: 'rgba(148,163,184,0.06)' }
+const tick = { color: '#64748b', font: { size: 11 } }
+
+// ── Reusable mini components ──
+const KpiCard = ({ icon: Icon, label, value, change, changeType, sub, accent }) => (
+  <div style={{
+    background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 16,
+    padding: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
+    transition: 'all 0.25s ease', cursor: 'default',
+  }}
+    onMouseEnter={e => { e.currentTarget.style.borderColor = accent; e.currentTarget.style.boxShadow = `0 8px 32px ${accent}15` }}
+    onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-subtle)'; e.currentTarget.style.boxShadow = 'none' }}
+  >
+    <div>
+      <div style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600, marginBottom: 8 }}>{label}</div>
+      <div style={{ fontSize: 36, fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1, letterSpacing: '-0.03em' }}>{value}</div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 10 }}>
+        {change !== undefined && (
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', gap: 2, fontSize: 11, fontWeight: 700,
+            color: changeType === 'up' ? C.green : changeType === 'down' ? C.red : 'var(--text-muted)',
+          }}>
+            {changeType === 'up' ? <ArrowUpRight size={12} /> : changeType === 'down' ? <ArrowDownRight size={12} /> : null}
+            {change}
+          </span>
+        )}
+        {sub && <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{sub}</span>}
+      </div>
+    </div>
+    <div style={{
+      width: 52, height: 52, borderRadius: 16, flexShrink: 0,
+      background: `${accent}12`, color: accent,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+    }}>
+      <Icon size={24} />
+    </div>
+  </div>
+)
+
+const SectionTitle = ({ children }) => (
+  <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+    {children}
+  </div>
+)
 
 export default function Dashboard() {
   const [employees, setEmployees] = useState([])
@@ -49,305 +70,193 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    Promise.all([
-      getEmployees(),
-      getTasks(),
-      getWorkflows(),
-      getAttendance(),
-      getLeaveRequests(),
-    ]).then(([e, t, w, a, l]) => {
-      setEmployees(e.data || [])
-      setTasks(t.data || [])
-      setWorkflows(w.data || [])
-      setAttendance(a.data || [])
-      setLeaves(l.data || [])
-      setLoading(false)
-    })
+    Promise.all([getEmployees(), getTasks(), getWorkflows(), getAttendance(), getLeaveRequests()])
+      .then(([e, t, w, a, l]) => {
+        setEmployees(e.data || []); setTasks(t.data || []); setWorkflows(w.data || [])
+        setAttendance(a.data || []); setLeaves(l.data || []); setLoading(false)
+      })
   }, [])
 
   if (loading) return <LoadingSpinner />
 
-  const activeEmployees = employees.filter(e => e.status === '在職').length
-  const completedTasks = tasks.filter(t => t.status === '已完成').length
-  const inProgressTasks = tasks.filter(t => t.status === '進行中').length
-  const notStartedTasks = tasks.filter(t => t.status === '未開始').length
-  const activeWorkflows = workflows.filter(w => w.active_instances > 0).length
-  const workflowProgress = tasks.length ? Math.round(completedTasks / tasks.length * 100) : 0
-  const lateCount = attendance.filter(a => a.status === '遲到').length
-  const resignedCount = employees.filter(e => e.status === '離職').length
-
-  // ── Chart Data ──
-
-  // Task status doughnut
-  const taskDoughnutData = {
-    labels: ['已完成', '進行中', '未開始'],
-    datasets: [{
-      data: [completedTasks, inProgressTasks, notStartedTasks],
-      backgroundColor: [chartColors.green, chartColors.blue, chartColors.orange],
-      borderWidth: 0,
-      hoverOffset: 6,
-    }],
-  }
-
-  // Department headcount bar chart
-  const deptCounts = {}
-  employees.filter(e => e.status === '在職').forEach(e => {
-    deptCounts[e.dept || '未分類'] = (deptCounts[e.dept || '未分類'] || 0) + 1
-  })
-  const deptBarData = {
-    labels: Object.keys(deptCounts),
-    datasets: [{
-      label: '人數',
-      data: Object.values(deptCounts),
-      backgroundColor: [chartColors.cyan, chartColors.blue, chartColors.purple, chartColors.green, chartColors.orange, chartColors.pink],
-      borderRadius: 8,
-      borderSkipped: false,
-      barThickness: 32,
-    }],
-  }
-
-  // Weekly attendance trend (last 7 days)
-  const last7Days = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date()
-    d.setDate(d.getDate() - (6 - i))
-    return d.toISOString().slice(0, 10)
-  })
-  const attendanceByDay = last7Days.map(date => {
-    const dayRecords = attendance.filter(a => a.date === date)
-    return {
-      date,
-      label: `${parseInt(date.slice(5, 7))}/${parseInt(date.slice(8))}`,
-      normal: dayRecords.filter(a => a.status === '正常').length,
-      late: dayRecords.filter(a => a.status === '遲到').length,
-      total: dayRecords.length,
-    }
-  })
-  const attendanceLineData = {
-    labels: attendanceByDay.map(d => d.label),
-    datasets: [
-      {
-        label: '正常出勤',
-        data: attendanceByDay.map(d => d.normal),
-        borderColor: chartColors.green,
-        backgroundColor: 'rgba(52, 211, 153, 0.1)',
-        fill: true,
-        tension: 0.4,
-        pointRadius: 4,
-        pointBackgroundColor: chartColors.green,
-      },
-      {
-        label: '遲到',
-        data: attendanceByDay.map(d => d.late),
-        borderColor: chartColors.orange,
-        backgroundColor: 'rgba(251, 146, 60, 0.1)',
-        fill: true,
-        tension: 0.4,
-        pointRadius: 4,
-        pointBackgroundColor: chartColors.orange,
-      },
-    ],
-  }
-
-  // Leave type breakdown
-  const leaveTypes = {}
-  leaves.forEach(l => {
-    leaveTypes[l.type || '其他'] = (leaveTypes[l.type || '其他'] || 0) + 1
-  })
-  const leaveColors = [chartColors.blue, chartColors.purple, chartColors.cyan, chartColors.pink, chartColors.yellow, chartColors.orange]
-  const leaveDoughnutData = {
-    labels: Object.keys(leaveTypes).length > 0 ? Object.keys(leaveTypes) : ['無資料'],
-    datasets: [{
-      data: Object.keys(leaveTypes).length > 0 ? Object.values(leaveTypes) : [1],
-      backgroundColor: Object.keys(leaveTypes).length > 0 ? leaveColors.slice(0, Object.keys(leaveTypes).length) : ['rgba(148,163,184,0.2)'],
-      borderWidth: 0,
-      hoverOffset: 6,
-    }],
-  }
+  const active = employees.filter(e => e.status === '在職').length
+  const done = tasks.filter(t => t.status === '已完成').length
+  const doing = tasks.filter(t => t.status === '進行中').length
+  const todo = tasks.filter(t => t.status === '未開始').length
+  const progress = tasks.length ? Math.round(done / tasks.length * 100) : 0
+  const late = attendance.filter(a => a.status === '遲到').length
+  const onLeave = leaves.filter(l => l.status === '已核准').length
 
   const now = new Date()
   const greeting = now.getHours() < 12 ? '早安' : now.getHours() < 18 ? '午安' : '晚安'
-  const dateStr = now.toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })
+
+  // Chart data
+  const last7 = Array.from({ length: 7 }, (_, i) => { const d = new Date(); d.setDate(d.getDate() - (6 - i)); return d.toISOString().slice(0, 10) })
+  const attByDay = last7.map(date => {
+    const r = attendance.filter(a => a.date === date)
+    return { label: `${parseInt(date.slice(5, 7))}/${parseInt(date.slice(8))}`, normal: r.filter(a => a.status === '正常').length, late: r.filter(a => a.status === '遲到').length }
+  })
+
+  const deptCounts = {}
+  employees.filter(e => e.status === '在職').forEach(e => { deptCounts[e.dept || '其他'] = (deptCounts[e.dept || '其他'] || 0) + 1 })
+
+  const leaveTypes = {}
+  leaves.forEach(l => { leaveTypes[l.type || '其他'] = (leaveTypes[l.type || '其他'] || 0) + 1 })
 
   return (
-    <div className="fade-in">
-      {/* ── Hero Welcome Banner ── */}
-      <div style={{
-        background: 'linear-gradient(135deg, rgba(34,211,238,0.08) 0%, rgba(59,130,246,0.06) 50%, rgba(167,139,250,0.06) 100%)',
-        border: '1px solid rgba(34,211,238,0.12)',
-        borderRadius: 20, padding: '28px 32px', marginBottom: 24,
-        position: 'relative', overflow: 'hidden',
-      }}>
-        {/* Ambient orbs */}
-        <div style={{ position: 'absolute', top: -60, right: -40, width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(34,211,238,0.08) 0%, transparent 70%)', pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', bottom: -40, left: '30%', width: 160, height: 160, borderRadius: '50%', background: 'radial-gradient(circle, rgba(167,139,250,0.06) 0%, transparent 70%)', pointerEvents: 'none' }} />
+    <div className="fade-in" style={{ maxWidth: 1400 }}>
 
-        <div style={{ position: 'relative', zIndex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <h1 style={{ fontSize: 24, fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
-              {greeting}！👋
-            </h1>
-            <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 6 }}>
-              {dateStr} — 以下是今日的營運概覽
-            </p>
+      {/* ════════ Row 1: Welcome ════════ */}
+      <div style={{ marginBottom: 32 }}>
+        <h1 style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
+          {greeting} 👋
+        </h1>
+        <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 6 }}>
+          {now.toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })}
+        </p>
+      </div>
+
+      {/* ════════ Row 2: KPI Cards ════════ */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 32 }}>
+        <KpiCard icon={Users} label="在職人數" value={active} change={`共 ${employees.length} 人`} sub="" accent={C.cyan} />
+        <KpiCard icon={CheckCircle} label="今日出勤" value={active - late} changeType={late === 0 ? 'up' : 'down'} change={late === 0 ? '全員到齊' : `${late} 人遲到`} accent={C.blue} />
+        <KpiCard icon={Briefcase} label="進行中任務" value={doing} change={`${todo} 項未開始`} sub="" accent={C.purple} />
+        <KpiCard icon={CalendarCheck} label="任務完成率" value={`${progress}%`} changeType={progress >= 50 ? 'up' : 'down'} change={`${done}/${tasks.length} 已完成`} accent={C.green} />
+      </div>
+
+      {/* ════════ Row 3: Attendance Chart + Task Doughnut ════════ */}
+      <div style={{ display: 'grid', gridTemplateColumns: '5fr 3fr', gap: 20, marginBottom: 32 }}>
+        {/* Attendance */}
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 16, padding: '24px' }}>
+          <SectionTitle><TrendingUp size={16} style={{ color: C.cyan }} /> 近七天出勤趨勢</SectionTitle>
+          <div style={{ height: 280 }}>
+            <Line
+              data={{
+                labels: attByDay.map(d => d.label),
+                datasets: [
+                  { label: '正常', data: attByDay.map(d => d.normal), borderColor: C.green, backgroundColor: 'rgba(52,211,153,0.08)', fill: true, tension: 0.4, pointRadius: 5, pointBackgroundColor: C.green, borderWidth: 2.5 },
+                  { label: '遲到', data: attByDay.map(d => d.late), borderColor: C.orange, backgroundColor: 'rgba(251,146,60,0.08)', fill: true, tension: 0.4, pointRadius: 5, pointBackgroundColor: C.orange, borderWidth: 2.5 },
+                ],
+              }}
+              options={{ ...chartOpts, scales: { x: { grid, ticks: tick }, y: { beginAtZero: true, grid, ticks: { ...tick, stepSize: 1 } } } }}
+            />
           </div>
-          <div style={{ display: 'flex', gap: 12 }}>
-            {/* Mini summary pills */}
-            {[
-              { label: '在職', value: activeEmployees, color: 'var(--accent-cyan)' },
-              { label: '任務', value: tasks.length, color: 'var(--accent-blue)' },
-              { label: '完成率', value: `${workflowProgress}%`, color: 'var(--accent-green)' },
-            ].map((p, i) => (
-              <div key={i} style={{
-                padding: '8px 16px', borderRadius: 12,
-                background: 'var(--bg-card)', border: '1px solid var(--border-subtle)',
-                textAlign: 'center', minWidth: 80,
-              }}>
-                <div style={{ fontSize: 20, fontWeight: 800, color: p.color, lineHeight: 1 }}>{p.value}</div>
-                <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 4 }}>{p.label}</div>
+        </div>
+
+        {/* Task doughnut */}
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 16, padding: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <SectionTitle><Target size={16} style={{ color: C.blue }} /> 任務分佈</SectionTitle>
+          <div style={{ width: 200, height: 200, position: 'relative', marginTop: 8 }}>
+            <Doughnut
+              data={{ labels: ['已完成', '進行中', '未開始'], datasets: [{ data: [done, doing, todo], backgroundColor: [C.green, C.blue, C.orange], borderWidth: 0, hoverOffset: 6 }] }}
+              options={{ ...chartOpts, cutout: '68%', plugins: { ...chartOpts.plugins, legend: { display: false } } }}
+            />
+            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center' }}>
+              <div style={{ fontSize: 32, fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1 }}>{progress}%</div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>完成率</div>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 20, marginTop: 20 }}>
+            {[{ l: '已完成', c: C.green, v: done }, { l: '進行中', c: C.blue, v: doing }, { l: '未開始', c: C.orange, v: todo }].map(i => (
+              <div key={i.l} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: i.c }} />
+                <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{i.l}</span>
+                <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)' }}>{i.v}</span>
               </div>
             ))}
           </div>
         </div>
       </div>
 
-      {/* ── KPI Cards ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, marginBottom: 20 }}>
-        {[
-          { icon: Users, label: '在職人數', value: activeEmployees, color: 'cyan', sub: `全公司 ${employees.length} 人` },
-          { icon: CheckCircle, label: '今日出勤', value: activeEmployees, color: 'blue', sub: '全員到齊' },
-          { icon: AlertTriangle, label: '遲到人數', value: lateCount, color: 'orange', sub: lateCount > 0 ? '需要關注' : '表現良好' },
-        ].map((s, i) => (
-          <div key={i} className="stat-card" style={{ '--card-accent': `var(--accent-${s.color})`, '--card-accent-dim': `var(--accent-${s.color}-dim)`, padding: '22px 24px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <div>
-                <div className="stat-card-label">{s.label}</div>
-                <div className="stat-card-value" style={{ fontSize: 32, marginTop: 4 }}>{s.value}</div>
-                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 6 }}>{s.sub}</div>
-              </div>
-              <div style={{
-                width: 48, height: 48, borderRadius: 14,
-                background: `var(--accent-${s.color}-dim)`, color: `var(--accent-${s.color})`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                <s.icon size={22} />
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* ── Second Row Stats ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 12, marginBottom: 20 }}>
-        {[
-          { label: '進行中流程', value: activeWorkflows, color: 'cyan' },
-          { label: '總任務', value: tasks.length, color: 'green' },
-          { label: '進行中', value: inProgressTasks, color: 'blue' },
-          { label: '已完成', value: completedTasks, color: 'green' },
-          { label: '請假中', value: leaves.filter(l => l.status === '已核准').length, color: 'purple' },
-        ].map((s, i) => (
-          <div key={i} className="stat-card" style={{ '--card-accent': `var(--accent-${s.color})`, '--card-accent-dim': `var(--accent-${s.color}-dim)` }}>
-            <div className="stat-card-label">{s.label}</div>
-            <div className="stat-card-value">{s.value}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* ── Progress Bar ── */}
-      <div className="card mb-6">
-        <div className="card-body">
-          <div className="progress-bar-container">
-            <div className="progress-header">
-              <span className="progress-label"><span>📋</span> 進行中流程</span>
-              <span className="progress-value">{workflowProgress}%</span>
-            </div>
-            <div className="progress-track">
-              <div className="progress-fill" style={{ width: `${workflowProgress}%` }}></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Charts Row 1 ── */}
-      {/* ── Charts Row 1 ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
-        <div className="card">
-          <div className="card-header">
-            <div className="card-title"><span className="card-title-icon"><TrendingUp size={14} /></span> 近 7 天出勤趨勢</div>
-          </div>
-          <div style={{ height: 260, padding: '0 8px 8px' }}>
-            <Line data={attendanceLineData} options={{ ...chartDefaults, scales: { x: { grid: { color: 'rgba(148,163,184,0.06)' }, ticks: { color: '#64748b', font: { size: 11 } } }, y: { beginAtZero: true, grid: { color: 'rgba(148,163,184,0.06)' }, ticks: { color: '#64748b', font: { size: 11 }, stepSize: 1 } } } }} />
+      {/* ════════ Row 4: Dept Bar + Leave Pie + Progress ════════ */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 20, marginBottom: 32 }}>
+        {/* Department */}
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 16, padding: '24px' }}>
+          <SectionTitle><Users size={16} style={{ color: C.purple }} /> 部門人力</SectionTitle>
+          <div style={{ height: 220 }}>
+            <Bar
+              data={{ labels: Object.keys(deptCounts), datasets: [{ data: Object.values(deptCounts), backgroundColor: [C.cyan, C.blue, C.purple, C.green, C.orange, C.pink], borderRadius: 8, barThickness: 28 }] }}
+              options={{ ...chartOpts, plugins: { ...chartOpts.plugins, legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: tick }, y: { beginAtZero: true, grid, ticks: { ...tick, stepSize: 1 } } } }}
+            />
           </div>
         </div>
 
-        <div className="card">
-          <div className="card-header">
-            <div className="card-title"><span className="card-title-icon"><Target size={14} /></span> 任務完成狀態</div>
+        {/* Leave types */}
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 16, padding: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <SectionTitle><Clock size={16} style={{ color: C.pink }} /> 假別分佈</SectionTitle>
+          <div style={{ width: '100%', height: 220, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Doughnut
+              data={{
+                labels: Object.keys(leaveTypes).length > 0 ? Object.keys(leaveTypes) : ['無資料'],
+                datasets: [{ data: Object.keys(leaveTypes).length > 0 ? Object.values(leaveTypes) : [1], backgroundColor: Object.keys(leaveTypes).length > 0 ? [C.blue, C.purple, C.cyan, C.pink, C.yellow, C.orange] : ['rgba(148,163,184,0.15)'], borderWidth: 0 }],
+              }}
+              options={{ ...chartOpts, cutout: '55%', plugins: { ...chartOpts.plugins, legend: { ...chartOpts.plugins.legend, position: 'bottom' } } }}
+            />
           </div>
-          <div style={{ padding: '8px 8px 0', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <div style={{ width: 180, height: 180, position: 'relative' }}>
-              <Doughnut data={taskDoughnutData} options={{ ...chartDefaults, cutout: '65%', plugins: { ...chartDefaults.plugins, legend: { display: false } } }} />
-              <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center' }}>
-                <div style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-primary)' }}>{workflowProgress}%</div>
-                <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>完成率</div>
-              </div>
-            </div>
-            <div style={{ display: 'flex', gap: 16, padding: '14px 0 12px' }}>
-              {[
-                { label: '已完成', color: chartColors.green, value: completedTasks },
-                { label: '進行中', color: chartColors.blue, value: inProgressTasks },
-                { label: '未開始', color: chartColors.orange, value: notStartedTasks },
-              ].map(l => (
-                <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: l.color }} />
-                  <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{l.label}</span>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-primary)' }}>{l.value}</span>
+        </div>
+
+        {/* Flow progress */}
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 16, padding: '24px' }}>
+          <SectionTitle>📊 快速概覽</SectionTitle>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 8 }}>
+            {[
+              { label: '流程完成率', value: progress, color: C.cyan },
+              { label: '出勤率', value: active > 0 ? Math.round((active - late) / active * 100) : 100, color: C.green },
+              { label: '任務消化率', value: tasks.length > 0 ? Math.round((done + doing) / tasks.length * 100) : 0, color: C.purple },
+            ].map((p, i) => (
+              <div key={i}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{p.label}</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: p.color }}>{p.value}%</span>
                 </div>
-              ))}
-            </div>
+                <div style={{ height: 8, background: 'var(--glass-strong)', borderRadius: 99, overflow: 'hidden' }}>
+                  <div style={{ height: '100%', width: `${p.value}%`, borderRadius: 99, background: `linear-gradient(90deg, ${p.color}, ${p.color}88)`, transition: 'width 1s ease' }} />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ marginTop: 24, paddingTop: 16, borderTop: '1px solid var(--border-subtle)' }}>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 10 }}>今日數據</div>
+            {[
+              { label: '請假中', value: onLeave, color: C.purple },
+              { label: '待審假單', value: leaves.filter(l => l.status === '待審核').length, color: C.orange },
+              { label: '進行中流程', value: workflows.filter(w => w.active_instances > 0).length, color: C.cyan },
+            ].map((d, i) => (
+              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13 }}>
+                <span style={{ color: 'var(--text-secondary)' }}>{d.label}</span>
+                <span style={{ fontWeight: 700, color: d.color }}>{d.value}</span>
+              </div>
+            ))}
           </div>
         </div>
       </div>
 
-      {/* ── Charts Row 2 ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16, marginBottom: 16 }}>
-        <div className="card">
-          <div className="card-header">
-            <div className="card-title"><span className="card-title-icon"><Users size={14} /></span> 部門人數分布</div>
-          </div>
-          <div style={{ height: 240, padding: '0 8px 8px' }}>
-            <Bar data={deptBarData} options={{ ...chartDefaults, plugins: { ...chartDefaults.plugins, legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { color: '#64748b', font: { size: 11 } } }, y: { beginAtZero: true, grid: { color: 'rgba(148,163,184,0.06)' }, ticks: { color: '#64748b', font: { size: 11 }, stepSize: 1 } } } }} />
-          </div>
-        </div>
-
-        <div className="card">
-          <div className="card-header">
-            <div className="card-title"><span className="card-title-icon">📋</span> 請假類型分布</div>
-          </div>
-          <div style={{ height: 240, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 8px 8px' }}>
-            <Doughnut data={leaveDoughnutData} options={{ ...chartDefaults, cutout: '60%', plugins: { ...chartDefaults.plugins, legend: { ...chartDefaults.plugins.legend, position: 'bottom' } } }} />
-          </div>
-        </div>
-      </div>
-
-      {/* ── Tasks Table ── */}
-      <div className="card">
-        <div className="card-header">
-          <div className="card-title"><span className="card-title-icon">📋</span> 最近任務</div>
+      {/* ════════ Row 5: Recent Tasks ════════ */}
+      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 16, overflow: 'hidden' }}>
+        <div style={{ padding: '18px 24px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <SectionTitle>📋 最近任務</SectionTitle>
+          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>共 {tasks.length} 項</span>
         </div>
         <div className="data-table-wrapper">
           <table className="data-table">
-            <thead><tr><th>#</th><th>任務</th><th>狀態</th><th>負責人</th></tr></thead>
+            <thead><tr><th>#</th><th>任務名稱</th><th>狀態</th><th>負責人</th><th>優先度</th></tr></thead>
             <tbody>
-              {tasks.map(task => (
-                <tr key={task.id}>
-                  <td style={{ color: 'var(--text-muted)' }}>{task.id}</td>
-                  <td>{task.title}</td>
+              {tasks.slice(0, 10).map(t => (
+                <tr key={t.id}>
+                  <td style={{ color: 'var(--text-muted)', width: 40 }}>{t.id}</td>
+                  <td style={{ fontWeight: 600 }}>{t.title}</td>
                   <td>
-                    <span className={`badge ${task.status === '已完成' ? 'badge-success' : task.status === '進行中' ? 'badge-info' : 'badge-warning'}`}>
-                      <span className="badge-dot"></span>{task.status}
+                    <span className={`badge ${t.status === '已完成' ? 'badge-success' : t.status === '進行中' ? 'badge-info' : 'badge-warning'}`}>
+                      <span className="badge-dot"></span>{t.status}
                     </span>
                   </td>
-                  <td>{task.assignee}</td>
+                  <td>{t.assignee}</td>
+                  <td>
+                    <span className={`badge ${t.priority === '高' ? 'badge-danger' : t.priority === '中' ? 'badge-warning' : 'badge-info'}`}>
+                      {t.priority || '中'}
+                    </span>
+                  </td>
                 </tr>
               ))}
             </tbody>
