@@ -4,22 +4,94 @@
 
 /* ---- CSS Custom Properties ---- */
 :root {
-  /* Background palette */
+  /* ═══ Soft UI Light (Default) ═══ */
+
+  /* Background — 淺灰底 */
+  --bg-primary: #e8ecf1;
+  --bg-secondary: #dfe3ea;
+  --bg-tertiary: #d4d9e2;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f8f9fb;
+  --bg-sidebar: #2d3348;
+  --bg-input: #f1f3f7;
+  --bg-modal-overlay: rgba(0, 0, 0, 0.35);
+
+  /* Surface layers */
+  --glass-light: rgba(0, 0, 0, 0.02);
+  --glass-medium: rgba(0, 0, 0, 0.04);
+  --glass-strong: rgba(0, 0, 0, 0.07);
+
+  /* Accent colors — 更飽和 */
+  --accent-cyan: #0891b2;
+  --accent-cyan-dim: rgba(8, 145, 178, 0.1);
+  --accent-cyan-glow: rgba(8, 145, 178, 0.2);
+  --accent-blue: #2563eb;
+  --accent-blue-dim: rgba(37, 99, 235, 0.08);
+  --accent-purple: #7c3aed;
+  --accent-purple-dim: rgba(124, 58, 237, 0.08);
+  --accent-green: #059669;
+  --accent-green-dim: rgba(5, 150, 105, 0.08);
+  --accent-orange: #ea580c;
+  --accent-orange-dim: rgba(234, 88, 12, 0.08);
+  --accent-red: #dc2626;
+  --accent-red-dim: rgba(220, 38, 38, 0.08);
+  --accent-pink: #db2777;
+  --accent-pink-dim: rgba(219, 39, 119, 0.08);
+  --accent-yellow: #d97706;
+  --accent-yellow-dim: rgba(217, 119, 6, 0.08);
+
+  /* Text — 深色文字在淺底上 */
+  --text-primary: #1a202e;
+  --text-secondary: #4a5568;
+  --text-tertiary: #718096;
+  --text-muted: #a0aec0;
+
+  /* Borders — 淡影 */
+  --border-subtle: rgba(0, 0, 0, 0.06);
+  --border-medium: rgba(0, 0, 0, 0.10);
+  --border-strong: rgba(0, 0, 0, 0.16);
+  --border-accent: rgba(8, 145, 178, 0.3);
+
+  /* Shadows — Soft UI 特色：白高光 + 暗影 */
+  --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.10);
+  --shadow-xl: 0 20px 50px rgba(0, 0, 0, 0.14);
+  --shadow-glow-cyan: 0 0 20px rgba(8, 145, 178, 0.12);
+  --shadow-glow-purple: 0 0 20px rgba(124, 58, 237, 0.12);
+
+  /* Layout */
+  --sidebar-width: 260px;
+  --sidebar-collapsed: 72px;
+  --header-height: 0px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+
+  /* Transitions */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 400ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-bounce: 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ---- Dark Theme (切換用) ---- */
+[data-theme="dark"] {
   --bg-primary: #06091a;
   --bg-secondary: #0c1029;
   --bg-tertiary: #111638;
   --bg-card: rgba(15, 23, 55, 0.65);
   --bg-card-hover: rgba(20, 30, 70, 0.75);
-  --bg-sidebar: rgba(8, 12, 35, 0.92);
+  --bg-sidebar: rgba(8, 12, 35, 0.95);
   --bg-input: rgba(15, 20, 50, 0.6);
   --bg-modal-overlay: rgba(0, 0, 0, 0.6);
 
-  /* Surface glass layers */
   --glass-light: rgba(255, 255, 255, 0.03);
   --glass-medium: rgba(255, 255, 255, 0.05);
   --glass-strong: rgba(255, 255, 255, 0.08);
 
-  /* Accent colors */
   --accent-cyan: #22d3ee;
   --accent-cyan-dim: rgba(34, 211, 238, 0.15);
   --accent-cyan-glow: rgba(34, 211, 238, 0.25);
@@ -38,92 +110,27 @@
   --accent-yellow: #fbbf24;
   --accent-yellow-dim: rgba(251, 191, 36, 0.15);
 
-  /* Text hierarchy */
   --text-primary: #f1f5f9;
   --text-secondary: #94a3b8;
   --text-tertiary: #64748b;
   --text-muted: #475569;
 
-  /* Borders */
   --border-subtle: rgba(148, 163, 184, 0.08);
   --border-medium: rgba(148, 163, 184, 0.12);
   --border-strong: rgba(148, 163, 184, 0.2);
   --border-accent: rgba(34, 211, 238, 0.3);
 
-  /* Shadows */
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
   --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.4);
   --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.5);
   --shadow-glow-cyan: 0 0 20px rgba(34, 211, 238, 0.15);
   --shadow-glow-purple: 0 0 20px rgba(167, 139, 250, 0.15);
-
-  /* Layout */
-  --sidebar-width: 260px;
-  --sidebar-collapsed: 72px;
-  --header-height: 0px;
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 20px;
-  --radius-full: 9999px;
-
-  /* Transitions */
-  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-slow: 400ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-bounce: 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* ---- Light Theme ---- */
+/* ---- Legacy Light Theme selector (backwards compat) ---- */
 [data-theme="light"] {
-  --bg-primary: #f0f2f5;
-  --bg-secondary: #e4e7ec;
-  --bg-tertiary: #dce0e8;
-  --bg-card: rgba(255, 255, 255, 0.85);
-  --bg-card-hover: rgba(255, 255, 255, 0.95);
-  --bg-sidebar: rgba(255, 255, 255, 0.95);
-  --bg-input: rgba(255, 255, 255, 0.8);
-  --bg-modal-overlay: rgba(0, 0, 0, 0.3);
-
-  --glass-light: rgba(0, 0, 0, 0.02);
-  --glass-medium: rgba(0, 0, 0, 0.04);
-  --glass-strong: rgba(0, 0, 0, 0.06);
-
-  --accent-cyan: #0891b2;
-  --accent-cyan-dim: rgba(8, 145, 178, 0.1);
-  --accent-cyan-glow: rgba(8, 145, 178, 0.15);
-  --accent-blue: #2563eb;
-  --accent-blue-dim: rgba(37, 99, 235, 0.1);
-  --accent-purple: #7c3aed;
-  --accent-purple-dim: rgba(124, 58, 237, 0.1);
-  --accent-green: #059669;
-  --accent-green-dim: rgba(5, 150, 105, 0.1);
-  --accent-orange: #ea580c;
-  --accent-orange-dim: rgba(234, 88, 12, 0.1);
-  --accent-red: #dc2626;
-  --accent-red-dim: rgba(220, 38, 38, 0.1);
-  --accent-pink: #db2777;
-  --accent-pink-dim: rgba(219, 39, 119, 0.1);
-  --accent-yellow: #d97706;
-  --accent-yellow-dim: rgba(217, 119, 6, 0.1);
-
-  --text-primary: #1e293b;
-  --text-secondary: #475569;
-  --text-tertiary: #64748b;
-  --text-muted: #94a3b8;
-
-  --border-subtle: rgba(0, 0, 0, 0.06);
-  --border-medium: rgba(0, 0, 0, 0.1);
-  --border-strong: rgba(0, 0, 0, 0.15);
-  --border-accent: rgba(8, 145, 178, 0.3);
-
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.12);
-  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.15);
-  --shadow-glow-cyan: 0 0 20px rgba(8, 145, 178, 0.1);
-  --shadow-glow-purple: 0 0 20px rgba(124, 58, 237, 0.1);
+  /* Same as :root default now */
 }
 
 [data-theme="light"] body::before {
@@ -239,8 +246,8 @@ input, select, textarea {
   width: var(--sidebar-width);
   height: 100vh;
   background: var(--bg-sidebar);
-  backdrop-filter: blur(24px) saturate(1.4);
-  border-right: 1px solid var(--border-subtle);
+  border-right: none;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.08);
   display: flex;
   flex-direction: column;
   position: fixed;
@@ -282,13 +289,13 @@ input, select, textarea {
 .sidebar-brand-text h1 {
   font-size: 15px;
   font-weight: 700;
-  color: var(--text-primary);
+  color: #f1f5f9;
   letter-spacing: -0.02em;
 }
 
 .sidebar-brand-text span {
   font-size: 10px;
-  color: var(--text-tertiary);
+  color: #94a3b8;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-weight: 500;
@@ -310,7 +317,7 @@ input, select, textarea {
   padding: 16px 20px 6px;
   font-size: 10px;
   font-weight: 600;
-  color: var(--text-muted);
+  color: #64748b;
   text-transform: uppercase;
   letter-spacing: 0.1em;
 }
@@ -322,7 +329,7 @@ input, select, textarea {
   padding: 9px 16px;
   margin: 2px 10px;
   border-radius: 10px;
-  color: var(--text-secondary);
+  color: #94a3b8;
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
@@ -332,14 +339,14 @@ input, select, textarea {
 }
 
 .nav-item:hover {
-  color: var(--text-primary);
-  background: var(--glass-medium);
+  color: #f1f5f9;
+  background: rgba(255, 255, 255, 0.08);
   transform: translateX(2px);
 }
 
 .nav-item.active {
-  color: var(--accent-cyan);
-  background: var(--accent-cyan-dim);
+  color: #22d3ee;
+  background: rgba(34, 211, 238, 0.12);
   font-weight: 600;
 }
 
@@ -412,7 +419,7 @@ input, select, textarea {
   padding: 7px 18px 7px 46px;
   margin: 0 8px;
   border-radius: var(--radius-sm);
-  color: var(--text-tertiary);
+  color: #718096;
   font-size: 12.5px;
   font-weight: 450;
   cursor: pointer;
@@ -420,13 +427,13 @@ input, select, textarea {
 }
 
 .nav-sub-item:hover {
-  color: var(--text-primary);
+  color: #e2e8f0;
   background: var(--glass-light);
 }
 
 .nav-sub-item.active {
-  color: var(--accent-cyan);
-  background: var(--accent-cyan-dim);
+  color: #22d3ee;
+  background: rgba(34, 211, 238, 0.1);
 }
 
 .nav-sub-item-icon {
@@ -448,7 +455,7 @@ input, select, textarea {
 /* Sidebar footer */
 .sidebar-footer {
   padding: 12px 16px;
-  border-top: 1px solid var(--border-subtle);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
   flex-shrink: 0;
 }
 
@@ -459,14 +466,14 @@ input, select, textarea {
   padding: 8px 10px;
   border-radius: var(--radius-md);
   font-size: 12px;
-  color: var(--text-tertiary);
+  color: #718096;
   cursor: pointer;
   transition: all var(--transition-fast);
 }
 
 .sidebar-lang-toggle:hover {
-  background: var(--glass-medium);
-  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.06);
+  color: #e2e8f0;
 }
 
 /* ---- Main Content ---- */
@@ -527,13 +534,13 @@ input, select, textarea {
 
 .stat-card {
   background: var(--bg-card);
-  backdrop-filter: blur(16px);
   border: 1px solid var(--border-subtle);
-  border-radius: 16px;
+  border-radius: 18px;
   padding: 18px 20px;
   position: relative;
   overflow: hidden;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
 
 .stat-card::before {
@@ -623,17 +630,17 @@ input, select, textarea {
 /* ---- Cards ---- */
 .card {
   background: var(--bg-card);
-  backdrop-filter: blur(16px);
   border: 1px solid var(--border-subtle);
-  border-radius: 16px;
+  border-radius: 18px;
   overflow: hidden;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.06);
 }
 
 .card:hover {
   border-color: var(--border-medium);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06), 0 12px 36px rgba(0,0,0,0.10);
+  transform: translateY(-1px);
 }
 
 .card-header {
