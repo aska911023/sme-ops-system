@@ -319,14 +319,14 @@ input, select, textarea {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 9px 18px;
-  margin: 1px 8px;
-  border-radius: var(--radius-md);
+  padding: 9px 16px;
+  margin: 2px 10px;
+  border-radius: 10px;
   color: var(--text-secondary);
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: all 0.2s ease;
   position: relative;
   user-select: none;
 }
@@ -334,24 +334,26 @@ input, select, textarea {
 .nav-item:hover {
   color: var(--text-primary);
   background: var(--glass-medium);
+  transform: translateX(2px);
 }
 
 .nav-item.active {
   color: var(--accent-cyan);
   background: var(--accent-cyan-dim);
+  font-weight: 600;
 }
 
 .nav-item.active::before {
   content: '';
   position: absolute;
-  left: -8px;
+  left: -10px;
   top: 50%;
   transform: translateY(-50%);
-  width: 3px;
-  height: 20px;
-  border-radius: 0 4px 4px 0;
-  background: var(--accent-cyan);
-  box-shadow: 0 0 8px var(--accent-cyan);
+  width: 4px;
+  height: 24px;
+  border-radius: 0 6px 6px 0;
+  background: linear-gradient(180deg, var(--accent-cyan), var(--accent-blue));
+  box-shadow: 0 0 12px var(--accent-cyan);
 }
 
 .nav-item-icon {
@@ -519,19 +521,19 @@ input, select, textarea {
 .stat-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 16px;
-  margin-bottom: 24px;
+  gap: 12px;
+  margin-bottom: 20px;
 }
 
 .stat-card {
   background: var(--bg-card);
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(16px);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  padding: 20px;
+  border-radius: 16px;
+  padding: 18px 20px;
   position: relative;
   overflow: hidden;
-  transition: all var(--transition-normal);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .stat-card::before {
@@ -540,36 +542,53 @@ input, select, textarea {
   top: 0;
   left: 0;
   right: 0;
-  height: 2px;
-  background: var(--card-accent, var(--accent-cyan));
-  opacity: 0.6;
+  height: 3px;
+  background: linear-gradient(90deg, var(--card-accent, var(--accent-cyan)), transparent);
+  opacity: 0.5;
   transition: opacity var(--transition-fast);
+}
+
+.stat-card::after {
+  content: '';
+  position: absolute;
+  top: -40%;
+  right: -20%;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: var(--card-accent, var(--accent-cyan));
+  opacity: 0.04;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
 }
 
 .stat-card:hover {
   background: var(--bg-card-hover);
-  border-color: var(--border-medium);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
+  border-color: var(--card-accent, var(--border-medium));
+  transform: translateY(-3px);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.15), 0 0 0 1px var(--card-accent, var(--accent-cyan));
 }
 
 .stat-card:hover::before {
   opacity: 1;
 }
 
+.stat-card:hover::after {
+  opacity: 0.08;
+}
+
 .stat-card-label {
-  font-size: 11.5px;
-  font-weight: 500;
-  color: var(--text-tertiary);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  margin-bottom: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+  margin-bottom: 10px;
 }
 
 .stat-card-value {
-  font-size: 28px;
+  font-size: 26px;
   font-weight: 800;
-  letter-spacing: -0.04em;
+  letter-spacing: -0.03em;
   color: var(--card-accent, var(--accent-cyan));
   line-height: 1;
 }
@@ -584,33 +603,41 @@ input, select, textarea {
   position: absolute;
   top: 16px;
   right: 16px;
-  width: 32px;
-  height: 32px;
-  border-radius: var(--radius-md);
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--card-accent-dim, var(--accent-cyan-dim));
   color: var(--card-accent, var(--accent-cyan));
-  opacity: 0.7;
+  opacity: 0.8;
+  transition: all 0.2s ease;
+}
+
+.stat-card:hover .stat-card-icon {
+  opacity: 1;
+  transform: scale(1.1);
 }
 
 /* ---- Cards ---- */
 .card {
   background: var(--bg-card);
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(16px);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
+  border-radius: 16px;
   overflow: hidden;
-  transition: all var(--transition-normal);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
 }
 
 .card:hover {
   border-color: var(--border-medium);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.12);
 }
 
 .card-header {
-  padding: 18px 22px;
+  padding: 16px 22px;
   border-bottom: 1px solid var(--border-subtle);
   display: flex;
   align-items: center;
@@ -620,14 +647,15 @@ input, select, textarea {
 
 .card-title {
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
   display: flex;
   align-items: center;
   gap: 8px;
+  color: var(--text-primary);
 }
 
 .card-title .card-title-icon {
-  font-size: 16px;
+  font-size: 15px;
 }
 
 .card-body {
@@ -647,30 +675,38 @@ input, select, textarea {
 }
 
 .data-table thead th {
-  padding: 12px 16px;
-  font-size: 11px;
-  font-weight: 600;
+  padding: 11px 16px;
+  font-size: 10.5px;
+  font-weight: 700;
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   text-align: left;
-  border-bottom: 1px solid var(--border-subtle);
-  background: var(--glass-light);
+  border-bottom: 1px solid var(--border-medium);
+  background: var(--glass-medium);
   position: sticky;
   top: 0;
   white-space: nowrap;
 }
 
 .data-table tbody tr {
-  transition: background var(--transition-fast);
+  transition: all 0.15s ease;
 }
 
 .data-table tbody tr:hover {
   background: var(--glass-medium);
 }
 
+.data-table tbody tr:nth-child(even) {
+  background: var(--glass-light);
+}
+
+.data-table tbody tr:nth-child(even):hover {
+  background: var(--glass-medium);
+}
+
 .data-table tbody td {
-  padding: 12px 16px;
+  padding: 11px 16px;
   font-size: 13px;
   color: var(--text-secondary);
   border-bottom: 1px solid var(--border-subtle);
@@ -679,7 +715,7 @@ input, select, textarea {
 
 .data-table tbody td:first-child {
   color: var(--text-primary);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 /* ---- Badges ---- */
@@ -690,16 +726,23 @@ input, select, textarea {
   padding: 3px 10px;
   border-radius: var(--radius-full);
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.02em;
   white-space: nowrap;
+  transition: all 0.15s ease;
 }
 
 .badge-dot {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
   border-radius: 50%;
   flex-shrink: 0;
+  animation: badgePulse 2s infinite;
+}
+
+@keyframes badgePulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }
 
 .badge-success {
@@ -748,24 +791,34 @@ input, select, textarea {
 .btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  padding: 8px 16px;
-  border-radius: var(--radius-md);
+  padding: 8px 18px;
+  border-radius: 10px;
   font-size: 13px;
   font-weight: 600;
-  transition: all var(--transition-fast);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   white-space: nowrap;
+  cursor: pointer;
+  border: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn:active {
+  transform: scale(0.97);
 }
 
 .btn-primary {
   background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
   color: white;
-  box-shadow: 0 2px 8px rgba(34, 211, 238, 0.2);
+  box-shadow: 0 2px 10px rgba(34, 211, 238, 0.25);
 }
 
 .btn-primary:hover {
-  box-shadow: 0 4px 16px rgba(34, 211, 238, 0.35);
-  transform: translateY(-1px);
+  box-shadow: 0 6px 24px rgba(34, 211, 238, 0.4);
+  transform: translateY(-2px);
+  filter: brightness(1.1);
 }
 
 .btn-secondary {
@@ -778,6 +831,8 @@ input, select, textarea {
   background: var(--glass-medium);
   color: var(--text-primary);
   border-color: var(--border-strong);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
 .btn-success {
@@ -886,7 +941,7 @@ input, select, textarea {
 }
 
 .progress-track {
-  height: 6px;
+  height: 8px;
   background: var(--glass-strong);
   border-radius: var(--radius-full);
   overflow: hidden;
@@ -895,10 +950,18 @@ input, select, textarea {
 .progress-fill {
   height: 100%;
   border-radius: var(--radius-full);
-  background: linear-gradient(90deg, var(--accent-cyan), var(--accent-blue));
-  box-shadow: 0 0 12px rgba(34, 211, 238, 0.3);
+  background: linear-gradient(90deg, var(--accent-cyan), var(--accent-blue), var(--accent-purple));
+  background-size: 200% 100%;
+  animation: progressShimmer 3s ease infinite;
+  box-shadow: 0 0 16px rgba(34, 211, 238, 0.35);
   transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
+}
+
+@keyframes progressShimmer {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
 .progress-fill::after {
@@ -906,9 +969,9 @@ input, select, textarea {
   position: absolute;
   top: 0;
   right: 0;
-  width: 30px;
+  width: 40px;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3));
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4));
   border-radius: var(--radius-full);
   animation: progress-shimmer 2s infinite;
 }
@@ -937,15 +1000,20 @@ input, select, textarea {
   padding: 9px 14px;
   background: var(--bg-input);
   border: 1px solid var(--border-medium);
-  border-radius: var(--radius-md);
+  border-radius: 10px;
   color: var(--text-primary);
   font-size: 13px;
-  transition: all var(--transition-fast);
+  transition: all 0.2s ease;
+  outline: none;
 }
 
 .form-input:focus {
   border-color: var(--accent-cyan);
-  box-shadow: 0 0 0 3px var(--accent-cyan-dim);
+  box-shadow: 0 0 0 3px var(--accent-cyan-dim), 0 2px 8px rgba(34, 211, 238, 0.1);
+}
+
+.form-input:hover:not(:focus) {
+  border-color: var(--border-strong);
 }
 
 .form-input::placeholder {
@@ -1123,7 +1191,8 @@ input, select, textarea {
 
 /* ---- Animations ---- */
 @keyframes fadeIn {
-  to { opacity: 1; }
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes modalIn {
