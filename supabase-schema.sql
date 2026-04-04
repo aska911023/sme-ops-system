@@ -765,6 +765,38 @@ create table invoices (
   created_at timestamptz default now()
 );
 
+-- ============================================================
+--  電商平台串接 (E-Commerce Integration)
+-- ============================================================
+
+create table ecommerce_connections (
+  id serial primary key,
+  platform text not null,
+  api_key text,
+  api_secret text,
+  shop_id text,
+  access_token text,
+  refresh_token text,
+  token_expires_at timestamptz,
+  sync_options jsonb default '{}',
+  status text default '未連接',
+  last_sync_at timestamptz,
+  last_error text,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create table ecommerce_sync_logs (
+  id serial primary key,
+  connection_id int references ecommerce_connections(id),
+  platform text,
+  sync_type text,
+  records_synced int default 0,
+  status text default '成功',
+  error_message text,
+  created_at timestamptz default now()
+);
+
 -- Inquiries (demo contact form)
 create table inquiries (
   id serial primary key,

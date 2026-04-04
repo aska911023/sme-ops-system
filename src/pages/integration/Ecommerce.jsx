@@ -1,5 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Wifi, WifiOff, RefreshCw, Settings } from 'lucide-react'
+
+const API_BASE = import.meta.env.VITE_ECOMMERCE_API || 'https://sme-ops-liff.vercel.app/api/ecommerce'
 
 const PLATFORMS = [
   {
@@ -60,30 +62,78 @@ export default function Ecommerce() {
     }))
   }
 
+  // 頁面載入時從後端拉取已儲存的連線
+  useEffect(() => {
+    fetch(API_BASE).then(r => r.json()).then(data => {
+      if (data.connections) {
+        data.connections.forEach(c => {
+          const pKey = c.platform
+          if (connections[pKey]) {
+            setConnections(prev => ({
+              ...prev,
+              [pKey]: {
+                ...prev[pKey],
+                connected: c.status === '已連接',
+                apiKey: c.api_key || '',
+                secret: c.api_secret || '',
+                shopId: c.shop_id || '',
+                syncEnabled: c.sync_options || {},
+                lastSync: c.last_sync_at ? new Date(c.last_sync_at).toLocaleString('zh-TW') : null,
+              },
+            }))
+          }
+        })
+      }
+    }).catch(() => {})
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const handleTestConnection = async (key) => {
     updateField(key, 'testing', true)
     const conn = connections[key]
     const platform = PLATFORMS.find(p => p.key === key)
 
-    // 模擬連線測試
-    await new Promise(r => setTimeout(r, 1500))
+    try {
+      // 呼叫後端 API 測試連線 + 儲存
+      const res = await fetch(API_BASE, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'connect',
+          platform: key,
+          api_key: conn.apiKey,
+          api_secret: conn.secret,
+          shop_id: conn.shopId,
+          sync_options: conn.syncEnabled,
+        }),
+      })
+      const result = await res.json()
 
-    if (!conn.apiKey || !conn.secret) {
       updateField(key, 'testing', false)
-      setMsg(`❌ ${platform.name} 連線失敗：請填寫完整的 API 金鑰`)
-      setTimeout(() => setMsg(''), 4000)
-      return
-    }
 
-    updateField(key, 'testing', false)
-    updateField(key, 'connected', true)
-    updateField(key, 'lastSync', new Date().toLocaleString('zh-TW'))
-    setMsg(`✅ ${platform.name} 連線成功！已建立連接`)
-    setTimeout(() => setMsg(''), 4000)
+      if (result.ok) {
+        updateField(key, 'connected', true)
+        updateField(key, 'lastSync', new Date().toLocaleString('zh-TW'))
+        setMsg(`✅ ${platform.name} 連線成功！API 金鑰已驗證並儲存`)
+      } else {
+        setMsg(`❌ ${platform.name} 連線失敗：${result.error || '未知錯誤'}`)
+      }
+    } catch (e) {
+      updateField(key, 'testing', false)
+      setMsg(`❌ ${platform.name} 連線失敗：${e.message}`)
+    }
+    setTimeout(() => setMsg(''), 5000)
   }
 
-  const handleDisconnect = (key) => {
+  const handleDisconnect = async (key) => {
     const platform = PLATFORMS.find(p => p.key === key)
+    try {
+      await fetch(API_BASE, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'disconnect', platform: key }),
+      })
+    } catch (e) { /* ignore */ }
     setConnections(prev => ({
       ...prev,
       [key]: { connected: false, apiKey: '', secret: '', shopId: '', syncEnabled: {}, testing: false, lastSync: null },
@@ -91,6 +141,28 @@ export default function Ecommerce() {
     setExpanded(null)
     setMsg(`${platform.name} 已中斷連線`)
     setTimeout(() => setMsg(''), 3000)
+  }
+
+  const handleManualSync = async (key) => {
+    const platform = PLATFORMS.find(p => p.key === key)
+    setMsg(`⏳ ${platform.name} 同步中...`)
+    try {
+      const res = await fetch(API_BASE, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'sync', platform: key }),
+      })
+      const result = await res.json()
+      if (result.ok) {
+        updateField(key, 'lastSync', new Date().toLocaleString('zh-TW'))
+        setMsg(`✅ ${platform.name} 同步完成！同步了 ${result.synced || 0} 筆資料`)
+      } else {
+        setMsg(`❌ 同步失敗：${result.error}`)
+      }
+    } catch (e) {
+      setMsg(`❌ 同步失敗：${e.message}`)
+    }
+    setTimeout(() => setMsg(''), 5000)
   }
 
   const connectedCount = Object.values(connections).filter(c => c.connected).length
@@ -242,7 +314,7 @@ export default function Ecommerce() {
                           <button
                             className="btn btn-secondary"
                             style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
-                            onClick={() => { updateField(p.key, 'lastSync', new Date().toLocaleString('zh-TW')); setMsg(`✅ ${p.name} 手動同步完成`); setTimeout(() => setMsg(''), 3000) }}
+                            onClick={() => handleManualSync(p.key)}
                           >
                             <RefreshCw size={14} /> 手動同步
                           </button>
