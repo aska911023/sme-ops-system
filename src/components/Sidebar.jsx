@@ -224,7 +224,7 @@ export default function Sidebar() {
   const navigate = useNavigate()
   const { profile, signOut } = useAuth()
   const [openMenus, setOpenMenus] = useState({ '/hr': true, '/process': true, '/org': true })
-  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light')
+  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark')
   const [mobileOpen, setMobileOpen] = useState(false)
 
   const toggleMenu = (path) => {
