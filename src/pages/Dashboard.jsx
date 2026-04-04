@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Users, CheckCircle, AlertTriangle, Clock, FileX, RotateCcw, TrendingUp, Target } from 'lucide-react'
+import { Users, CheckCircle, AlertTriangle, TrendingUp, Target } from 'lucide-react'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, PointElement, LineElement, Filler } from 'chart.js'
 import { Doughnut, Bar, Line } from 'react-chartjs-2'
 import { getEmployees, getTasks, getWorkflows, getAttendance, getLeaveRequests } from '../lib/db'
@@ -164,54 +164,86 @@ export default function Dashboard() {
     }],
   }
 
+  const now = new Date()
+  const greeting = now.getHours() < 12 ? '早安' : now.getHours() < 18 ? '午安' : '晚安'
+  const dateStr = now.toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })
+
   return (
     <div className="fade-in">
-      <div className="page-header">
-        <h2><span className="header-icon">📊</span> 營運儀表板</h2>
-        <p>所有門市營運概覽</p>
+      {/* ── Hero Welcome Banner ── */}
+      <div style={{
+        background: 'linear-gradient(135deg, rgba(34,211,238,0.08) 0%, rgba(59,130,246,0.06) 50%, rgba(167,139,250,0.06) 100%)',
+        border: '1px solid rgba(34,211,238,0.12)',
+        borderRadius: 20, padding: '28px 32px', marginBottom: 24,
+        position: 'relative', overflow: 'hidden',
+      }}>
+        {/* Ambient orbs */}
+        <div style={{ position: 'absolute', top: -60, right: -40, width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(34,211,238,0.08) 0%, transparent 70%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', bottom: -40, left: '30%', width: 160, height: 160, borderRadius: '50%', background: 'radial-gradient(circle, rgba(167,139,250,0.06) 0%, transparent 70%)', pointerEvents: 'none' }} />
+
+        <div style={{ position: 'relative', zIndex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <h1 style={{ fontSize: 24, fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
+              {greeting}！👋
+            </h1>
+            <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 6 }}>
+              {dateStr} — 以下是今日的營運概覽
+            </p>
+          </div>
+          <div style={{ display: 'flex', gap: 12 }}>
+            {/* Mini summary pills */}
+            {[
+              { label: '在職', value: activeEmployees, color: 'var(--accent-cyan)' },
+              { label: '任務', value: tasks.length, color: 'var(--accent-blue)' },
+              { label: '完成率', value: `${workflowProgress}%`, color: 'var(--accent-green)' },
+            ].map((p, i) => (
+              <div key={i} style={{
+                padding: '8px 16px', borderRadius: 12,
+                background: 'var(--bg-card)', border: '1px solid var(--border-subtle)',
+                textAlign: 'center', minWidth: 80,
+              }}>
+                <div style={{ fontSize: 20, fontWeight: 800, color: p.color, lineHeight: 1 }}>{p.value}</div>
+                <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 4 }}>{p.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* ── KPI Cards ── */}
-      <div className="stat-grid" style={{ gridTemplateColumns: 'repeat(6, 1fr)' }}>
-        <div className="stat-card" style={{ '--card-accent': 'var(--accent-cyan)', '--card-accent-dim': 'var(--accent-cyan-dim)' }}>
-          <div className="stat-card-icon"><Users size={16} /></div>
-          <div className="stat-card-label">在職人數</div>
-          <div className="stat-card-value">{activeEmployees}</div>
-        </div>
-        <div className="stat-card" style={{ '--card-accent': 'var(--accent-blue)', '--card-accent-dim': 'var(--accent-blue-dim)' }}>
-          <div className="stat-card-icon"><CheckCircle size={16} /></div>
-          <div className="stat-card-label">全勤</div>
-          <div className="stat-card-value">{activeEmployees}</div>
-        </div>
-        <div className="stat-card" style={{ '--card-accent': 'var(--accent-orange)', '--card-accent-dim': 'var(--accent-orange-dim)' }}>
-          <div className="stat-card-icon"><AlertTriangle size={16} /></div>
-          <div className="stat-card-label">遲到</div>
-          <div className="stat-card-value">{lateCount}</div>
-        </div>
-        <div className="stat-card" style={{ '--card-accent': 'var(--accent-purple)', '--card-accent-dim': 'var(--accent-purple-dim)' }}>
-          <div className="stat-card-icon"><Clock size={16} /></div>
-          <div className="stat-card-label">請假中</div>
-          <div className="stat-card-value">{leaves.filter(l => l.status === '已核准').length}</div>
-        </div>
-        <div className="stat-card" style={{ '--card-accent': 'var(--accent-red)', '--card-accent-dim': 'var(--accent-red-dim)' }}>
-          <div className="stat-card-icon"><FileX size={16} /></div>
-          <div className="stat-card-label">列離</div>
-          <div className="stat-card-value">0</div>
-        </div>
-        <div className="stat-card" style={{ '--card-accent': 'var(--accent-pink)', '--card-accent-dim': 'var(--accent-pink-dim)' }}>
-          <div className="stat-card-icon"><RotateCcw size={16} /></div>
-          <div className="stat-card-label">離職</div>
-          <div className="stat-card-value">{resignedCount}</div>
-        </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, marginBottom: 20 }}>
+        {[
+          { icon: Users, label: '在職人數', value: activeEmployees, color: 'cyan', sub: `全公司 ${employees.length} 人` },
+          { icon: CheckCircle, label: '今日出勤', value: activeEmployees, color: 'blue', sub: '全員到齊' },
+          { icon: AlertTriangle, label: '遲到人數', value: lateCount, color: 'orange', sub: lateCount > 0 ? '需要關注' : '表現良好' },
+        ].map((s, i) => (
+          <div key={i} className="stat-card" style={{ '--card-accent': `var(--accent-${s.color})`, '--card-accent-dim': `var(--accent-${s.color}-dim)`, padding: '22px 24px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div>
+                <div className="stat-card-label">{s.label}</div>
+                <div className="stat-card-value" style={{ fontSize: 32, marginTop: 4 }}>{s.value}</div>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 6 }}>{s.sub}</div>
+              </div>
+              <div style={{
+                width: 48, height: 48, borderRadius: 14,
+                background: `var(--accent-${s.color}-dim)`, color: `var(--accent-${s.color})`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <s.icon size={22} />
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* ── Second Row Stats ── */}
-      <div className="stat-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 12, marginBottom: 20 }}>
         {[
           { label: '進行中流程', value: activeWorkflows, color: 'cyan' },
-          { label: '總任務數', value: tasks.length, color: 'green' },
+          { label: '總任務', value: tasks.length, color: 'green' },
           { label: '進行中', value: inProgressTasks, color: 'blue' },
           { label: '已完成', value: completedTasks, color: 'green' },
+          { label: '請假中', value: leaves.filter(l => l.status === '已核准').length, color: 'purple' },
         ].map((s, i) => (
           <div key={i} className="stat-card" style={{ '--card-accent': `var(--accent-${s.color})`, '--card-accent-dim': `var(--accent-${s.color}-dim)` }}>
             <div className="stat-card-label">{s.label}</div>
