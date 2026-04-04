@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Users, CheckCircle, AlertTriangle, Clock, FileX, RotateCcw, Activity, ListChecks, CalendarCheck, Timer } from 'lucide-react'
-import StatCard from '../components/ui/StatCard'
-import { Card, CardHeader, CardGrid } from '../components/ui/Card'
+import { Users, CheckCircle, AlertTriangle, Clock, FileX, RotateCcw, TrendingUp, Target } from 'lucide-react'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, PointElement, LineElement, Filler } from 'chart.js'
 import { Doughnut, Bar, Line } from 'react-chartjs-2'
 import { getEmployees, getTasks, getWorkflows, getAttendance, getLeaveRequests } from '../lib/db'
@@ -173,23 +171,54 @@ export default function Dashboard() {
         <p>所有門市營運概覽</p>
       </div>
 
-      {/* ── KPI Cards (Tailwind) ── */}
-      <CardGrid cols={6} className="mb-4">
-        <StatCard icon={Users} label="在職人數" value={activeEmployees} color="cyan" />
-        <StatCard icon={CheckCircle} label="全勤" value={activeEmployees} color="blue" />
-        <StatCard icon={AlertTriangle} label="遲到" value={lateCount} color="orange" />
-        <StatCard icon={Clock} label="請假中" value={leaves.filter(l => l.status === '已核准').length} color="purple" />
-        <StatCard icon={FileX} label="列離" value={0} color="red" />
-        <StatCard icon={RotateCcw} label="離職" value={resignedCount} color="pink" />
-      </CardGrid>
+      {/* ── KPI Cards ── */}
+      <div className="stat-grid" style={{ gridTemplateColumns: 'repeat(6, 1fr)' }}>
+        <div className="stat-card" style={{ '--card-accent': 'var(--accent-cyan)', '--card-accent-dim': 'var(--accent-cyan-dim)' }}>
+          <div className="stat-card-icon"><Users size={16} /></div>
+          <div className="stat-card-label">在職人數</div>
+          <div className="stat-card-value">{activeEmployees}</div>
+        </div>
+        <div className="stat-card" style={{ '--card-accent': 'var(--accent-blue)', '--card-accent-dim': 'var(--accent-blue-dim)' }}>
+          <div className="stat-card-icon"><CheckCircle size={16} /></div>
+          <div className="stat-card-label">全勤</div>
+          <div className="stat-card-value">{activeEmployees}</div>
+        </div>
+        <div className="stat-card" style={{ '--card-accent': 'var(--accent-orange)', '--card-accent-dim': 'var(--accent-orange-dim)' }}>
+          <div className="stat-card-icon"><AlertTriangle size={16} /></div>
+          <div className="stat-card-label">遲到</div>
+          <div className="stat-card-value">{lateCount}</div>
+        </div>
+        <div className="stat-card" style={{ '--card-accent': 'var(--accent-purple)', '--card-accent-dim': 'var(--accent-purple-dim)' }}>
+          <div className="stat-card-icon"><Clock size={16} /></div>
+          <div className="stat-card-label">請假中</div>
+          <div className="stat-card-value">{leaves.filter(l => l.status === '已核准').length}</div>
+        </div>
+        <div className="stat-card" style={{ '--card-accent': 'var(--accent-red)', '--card-accent-dim': 'var(--accent-red-dim)' }}>
+          <div className="stat-card-icon"><FileX size={16} /></div>
+          <div className="stat-card-label">列離</div>
+          <div className="stat-card-value">0</div>
+        </div>
+        <div className="stat-card" style={{ '--card-accent': 'var(--accent-pink)', '--card-accent-dim': 'var(--accent-pink-dim)' }}>
+          <div className="stat-card-icon"><RotateCcw size={16} /></div>
+          <div className="stat-card-label">離職</div>
+          <div className="stat-card-value">{resignedCount}</div>
+        </div>
+      </div>
 
-      {/* ── Second Row Stats (Tailwind) ── */}
-      <CardGrid cols={4} className="mb-4">
-        <StatCard icon={Activity} label="進行中流程" value={activeWorkflows} color="cyan" />
-        <StatCard icon={ListChecks} label="總任務數" value={tasks.length} color="green" />
-        <StatCard icon={Timer} label="進行中" value={inProgressTasks} color="blue" />
-        <StatCard icon={CalendarCheck} label="已完成" value={completedTasks} color="green" trend="up" trendValue={`${workflowProgress}%`} />
-      </CardGrid>
+      {/* ── Second Row Stats ── */}
+      <div className="stat-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+        {[
+          { label: '進行中流程', value: activeWorkflows, color: 'cyan' },
+          { label: '總任務數', value: tasks.length, color: 'green' },
+          { label: '進行中', value: inProgressTasks, color: 'blue' },
+          { label: '已完成', value: completedTasks, color: 'green' },
+        ].map((s, i) => (
+          <div key={i} className="stat-card" style={{ '--card-accent': `var(--accent-${s.color})`, '--card-accent-dim': `var(--accent-${s.color}-dim)` }}>
+            <div className="stat-card-label">{s.label}</div>
+            <div className="stat-card-value">{s.value}</div>
+          </div>
+        ))}
+      </div>
 
       {/* ── Progress Bar ── */}
       <div className="card mb-6">
@@ -207,71 +236,79 @@ export default function Dashboard() {
       </div>
 
       {/* ── Charts Row 1 ── */}
-      {/* ── Charts Row 1 (Tailwind) ── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-        <Card>
-          <CardHeader icon="📈" title="近 7 天出勤趨勢" />
-          <div className="h-[260px] px-2">
+      {/* ── Charts Row 1 ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+        <div className="card">
+          <div className="card-header">
+            <div className="card-title"><span className="card-title-icon"><TrendingUp size={14} /></span> 近 7 天出勤趨勢</div>
+          </div>
+          <div style={{ height: 260, padding: '0 8px 8px' }}>
             <Line data={attendanceLineData} options={{ ...chartDefaults, scales: { x: { grid: { color: 'rgba(148,163,184,0.06)' }, ticks: { color: '#64748b', font: { size: 11 } } }, y: { beginAtZero: true, grid: { color: 'rgba(148,163,184,0.06)' }, ticks: { color: '#64748b', font: { size: 11 }, stepSize: 1 } } } }} />
           </div>
-        </Card>
+        </div>
 
-        <Card>
-          <CardHeader icon="🎯" title="任務完成狀態" />
-          <div className="flex flex-col items-center pt-2">
-            <div className="relative w-[180px] h-[180px]">
+        <div className="card">
+          <div className="card-header">
+            <div className="card-title"><span className="card-title-icon"><Target size={14} /></span> 任務完成狀態</div>
+          </div>
+          <div style={{ padding: '8px 8px 0', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <div style={{ width: 180, height: 180, position: 'relative' }}>
               <Doughnut data={taskDoughnutData} options={{ ...chartDefaults, cutout: '65%', plugins: { ...chartDefaults.plugins, legend: { display: false } } }} />
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
-                <div className="text-[28px] font-extrabold text-[var(--text-primary)]">{workflowProgress}%</div>
-                <div className="text-[10px] text-[var(--text-muted)]">完成率</div>
+              <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center' }}>
+                <div style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-primary)' }}>{workflowProgress}%</div>
+                <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>完成率</div>
               </div>
             </div>
-            <div className="flex gap-4 py-3">
+            <div style={{ display: 'flex', gap: 16, padding: '14px 0 12px' }}>
               {[
                 { label: '已完成', color: chartColors.green, value: completedTasks },
                 { label: '進行中', color: chartColors.blue, value: inProgressTasks },
                 { label: '未開始', color: chartColors.orange, value: notStartedTasks },
               ].map(l => (
-                <div key={l.label} className="flex items-center gap-1.5">
-                  <div className="w-2 h-2 rounded-full" style={{ background: l.color }} />
-                  <span className="text-[11px] text-[var(--text-secondary)]">{l.label}</span>
-                  <span className="text-[11px] font-bold text-[var(--text-primary)]">{l.value}</span>
+                <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: l.color }} />
+                  <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{l.label}</span>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-primary)' }}>{l.value}</span>
                 </div>
               ))}
             </div>
           </div>
-        </Card>
+        </div>
       </div>
 
-      {/* ── Charts Row 2 (Tailwind) ── */}
-      <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-4 mb-4">
-        <Card>
-          <CardHeader icon="👥" title="部門人數分布" />
-          <div className="h-[240px] px-2">
+      {/* ── Charts Row 2 ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16, marginBottom: 16 }}>
+        <div className="card">
+          <div className="card-header">
+            <div className="card-title"><span className="card-title-icon"><Users size={14} /></span> 部門人數分布</div>
+          </div>
+          <div style={{ height: 240, padding: '0 8px 8px' }}>
             <Bar data={deptBarData} options={{ ...chartDefaults, plugins: { ...chartDefaults.plugins, legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { color: '#64748b', font: { size: 11 } } }, y: { beginAtZero: true, grid: { color: 'rgba(148,163,184,0.06)' }, ticks: { color: '#64748b', font: { size: 11 }, stepSize: 1 } } } }} />
           </div>
-        </Card>
+        </div>
 
-        <Card>
-          <CardHeader icon="📋" title="請假類型分布" />
-          <div className="h-[240px] flex items-center justify-center px-2">
+        <div className="card">
+          <div className="card-header">
+            <div className="card-title"><span className="card-title-icon">📋</span> 請假類型分布</div>
+          </div>
+          <div style={{ height: 240, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 8px 8px' }}>
             <Doughnut data={leaveDoughnutData} options={{ ...chartDefaults, cutout: '60%', plugins: { ...chartDefaults.plugins, legend: { ...chartDefaults.plugins.legend, position: 'bottom' } } }} />
           </div>
-        </Card>
+        </div>
       </div>
 
-      {/* ── Tasks Table (Tailwind) ── */}
-      <Card padding={false}>
-        <div className="px-5 pt-5 pb-3">
-          <CardHeader icon="📋" title="最近任務" />
+      {/* ── Tasks Table ── */}
+      <div className="card">
+        <div className="card-header">
+          <div className="card-title"><span className="card-title-icon">📋</span> 最近任務</div>
         </div>
-        <div className="overflow-x-auto">
+        <div className="data-table-wrapper">
           <table className="data-table">
             <thead><tr><th>#</th><th>任務</th><th>狀態</th><th>負責人</th></tr></thead>
             <tbody>
               {tasks.map(task => (
                 <tr key={task.id}>
-                  <td className="text-[var(--text-muted)]">{task.id}</td>
+                  <td style={{ color: 'var(--text-muted)' }}>{task.id}</td>
                   <td>{task.title}</td>
                   <td>
                     <span className={`badge ${task.status === '已完成' ? 'badge-success' : task.status === '進行中' ? 'badge-info' : 'badge-warning'}`}>
@@ -284,7 +321,7 @@ export default function Dashboard() {
             </tbody>
           </table>
         </div>
-      </Card>
+      </div>
     </div>
   )
 }

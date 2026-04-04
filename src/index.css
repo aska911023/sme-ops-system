@@ -1,13 +1,3 @@
-@import "tailwindcss";
-
-/* 把 Tailwind preflight 加的 border-style: solid 還原 */
-@layer base {
-  *, ::before, ::after, ::backdrop {
-    border-style: unset;
-    border-width: unset;
-  }
-}
-
 /* ========================================
    SME OPS — Premium Design System
    ======================================== */
