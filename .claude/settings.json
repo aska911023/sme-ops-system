@@ -7,7 +7,11 @@
       "Read(//mnt/c/Users/TING/Documents/Astro8/AI/wines/**)",
       "Read(//c/Users/TING/Documents/Astro8/AI//**)",
       "WebFetch(domain:docs.google.com)",
-      "Bash(npx vite:*)"
+      "Bash(npx vite:*)",
+      "Bash(where supabase *)",
+      "Bash(npx supabase *)",
+      "PowerShell(cd \"c:\\\\Users\\\\TING\\\\Documents\\\\Astro8\\\\AI\\\\sme-ops\"; $env:SUPABASE_ACCESS_TOKEN=\"sbp_7c2630d0bd643863b161b57d569d62930237128f\"; npx supabase migration list 2>&1 | Select-Object -Last 20)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }
