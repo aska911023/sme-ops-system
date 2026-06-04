@@ -31,7 +31,8 @@
       "Bash(/c/Users/TING/flutter/bin/flutter --version)",
       "Bash(/c/Users/TING/flutter/bin/flutter create *)",
       "Bash(/c/Users/TING/flutter/bin/flutter pub *)",
-      "Bash(/c/Users/TING/flutter/bin/flutter analyze *)"
+      "Bash(/c/Users/TING/flutter/bin/flutter analyze *)",
+      "Bash(git pull *)"
     ]
   }
 }
