@@ -41,7 +41,32 @@
       "PowerShell(wc -l)",
       "PowerShell(@\\(ls \"c:\\\\Users\\\\TING\\\\Documents\\\\Astro8\\\\AI\\\\sme-ops\\\\src\\\\pages\\\\hr\" -File\\).Count)",
       "PowerShell(Get-ChildItem \"$env:USERPROFILE\\\\.gitnexus\\\\\" -Recurse | Select-Object FullName, Length, LastWriteTime | Format-Table -AutoSize)",
-      "Read(//c/Users/TING/.gitnexus/**)"
+      "Read(//c/Users/TING/.gitnexus/**)",
+      "Bash(grep -v \"//\\\\|useState\\\\|import\\\\|const.*=.*async\\\\|findCover\\\\|shiftLabel\\\\|shift_label\")",
+      "Bash(git -C \"c:\\\\Users\\\\TING\\\\Documents\\\\Astro8\\\\AI\\\\sme-ops\" stash)",
+      "Bash(git -C \"c:\\\\Users\\\\TING\\\\Documents\\\\Astro8\\\\AI\\\\sme-ops\" pull --rebase origin main)",
+      "Bash(git -C \"c:\\\\Users\\\\TING\\\\Documents\\\\Astro8\\\\AI\\\\sme-ops\" stash pop)",
+      "Bash(git -C \"c:\\\\Users\\\\TING\\\\Documents\\\\Astro8\\\\AI\\\\sme-ops\" push origin main)",
+      "Bash(ls \"C:\\\\Users\\\\TING\\\\.claude\\\\projects\\\\c--Users-TING-Documents-Astro8-AI-sme-ops\\\\memory\\\\\" 2>/dev/null && cat \"C:\\\\Users\\\\TING\\\\.claude\\\\projects\\\\c--Users-TING-Documents-Astro8-AI-sme-ops\\\\memory\\\\MEMORY.md\" 2>/dev/null || echo \"No memory files yet\")",
+      "Read(//c/Users/TING/.claude/projects/c--Users-TING-Documents-Astro8-AI-sme-ops/memory\" 2>/dev/null && cat C:UsersTING.claudeprojectsc--Users-TING-Documents-Astro8-AI-sme-opsmemoryMEMORY.md 2>/dev/**)",
+      "Read(//c/Users/TING/.claude/projects/c--Users-TING-Documents-Astro8-AI-sme-ops/memory/**)",
+      "Bash(Sort-Object)",
+      "Bash(Select-Object -Last 3)",
+      "PowerShell(Rename-Item -Path \"c:\\\\Users\\\\TING\\\\Documents\\\\Astro8\\\\AI\\\\sme-ops\\\\supabase\\\\migrations\\\\20260604155000_task_notify_on_save.sql\" -NewName \"20260604185000_task_notify_on_save.sql\")",
+      "Bash(mkdir -p \"c:\\\\Users\\\\TING\\\\Documents\\\\Astro8\\\\AI\\\\member-app\\\\lib\\\\core\\\\auth\")",
+      "Bash(mkdir -p \"c:\\\\Users\\\\TING\\\\Documents\\\\Astro8\\\\AI\\\\member-app\\\\lib\\\\features\\\\home\")",
+      "Bash(mkdir -p \"c:\\\\Users\\\\TING\\\\Documents\\\\Astro8\\\\AI\\\\member-app\\\\lib\\\\features\\\\member_card\")",
+      "Bash(mkdir -p \"c:\\\\Users\\\\TING\\\\Documents\\\\Astro8\\\\AI\\\\member-app\\\\lib\\\\features\\\\points\")",
+      "Bash(mkdir -p \"c:\\\\Users\\\\TING\\\\Documents\\\\Astro8\\\\AI\\\\member-app\\\\lib\\\\features\\\\level\")"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\TING\\Documents\\Astro8\\AI\\member-app\\lib\\shared\\theme",
+      "c:\\Users\\TING\\Documents\\Astro8\\AI\\member-app\\lib\\features\\points",
+      "c:\\Users\\TING\\Documents\\Astro8\\AI\\member-app\\lib\\features\\coupons",
+      "c:\\Users\\TING\\Documents\\Astro8\\AI\\member-app\\lib\\features\\purchases",
+      "c:\\Users\\TING\\Documents\\Astro8\\AI\\member-app\\lib\\features\\profile",
+      "c:\\Users\\TING\\Documents\\Astro8\\AI\\member-app\\lib\\shared\\widgets",
+      "c:\\Users\\TING\\Documents\\Astro8\\AI\\member-app\\lib"
     ]
   }
 }
