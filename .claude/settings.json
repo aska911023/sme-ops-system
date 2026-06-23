@@ -57,7 +57,11 @@
       "Bash(mkdir -p \"c:\\\\Users\\\\TING\\\\Documents\\\\Astro8\\\\AI\\\\member-app\\\\lib\\\\features\\\\home\")",
       "Bash(mkdir -p \"c:\\\\Users\\\\TING\\\\Documents\\\\Astro8\\\\AI\\\\member-app\\\\lib\\\\features\\\\member_card\")",
       "Bash(mkdir -p \"c:\\\\Users\\\\TING\\\\Documents\\\\Astro8\\\\AI\\\\member-app\\\\lib\\\\features\\\\points\")",
-      "Bash(mkdir -p \"c:\\\\Users\\\\TING\\\\Documents\\\\Astro8\\\\AI\\\\member-app\\\\lib\\\\features\\\\level\")"
+      "Bash(mkdir -p \"c:\\\\Users\\\\TING\\\\Documents\\\\Astro8\\\\AI\\\\member-app\\\\lib\\\\features\\\\level\")",
+      "Bash(gh repo *)",
+      "Bash(pages)",
+      "Bash(components\")",
+      "Read(//c/Users/TING/Documents/Astro8/AI/sme-ops/supabase/migrations/**)"
     ],
     "additionalDirectories": [
       "c:\\Users\\TING\\Documents\\Astro8\\AI\\member-app\\lib\\shared\\theme",
